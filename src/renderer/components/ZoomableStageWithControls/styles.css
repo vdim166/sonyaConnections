@@ -1,0 +1,17 @@
+.zoom-menu {
+  position: absolute;
+  bottom: 20px;
+  right: 0;
+}
+
+.zoom-pos-info {
+  color: black;
+}
+
+.zoom-number-info {
+  color: black;
+}
+
+.picking {
+  cursor: crosshair;
+}

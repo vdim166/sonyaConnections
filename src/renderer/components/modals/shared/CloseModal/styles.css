@@ -1,0 +1,17 @@
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+
+.close-modal:hover {
+  cursor: pointer;
+}
+
+.close-modal:hover svg path {
+  fill: white;
+}
+
+.close-modal:active svg path {
+  fill: rgb(206, 194, 194);
+}

@@ -1,0 +1,6 @@
+export const APP_SIGNALS = {
+  SET_ZOOM: 'SET_ZOOM',
+  GET_ZOOM: 'GET_ZOOM',
+  GET_PERSONS: 'GET_PERSONS',
+  ADD_PERSON: 'ADD_PERSON',
+};
