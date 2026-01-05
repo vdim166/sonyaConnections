@@ -1,17 +1,22 @@
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
+import { generateRandomId } from '../utils/generateRandomId';
 
 const userDataPath = app.getPath('userData');
 const mainFolder = path.join(userDataPath, 'sonyaConnections');
 
-export type figureType = {
+export type figureTypeDTO = {
   name: string;
   points: {
     x: number;
     y: number;
   };
 };
+
+export type figureType = {
+  id: string;
+} & figureTypeDTO;
 
 type dataType = {
   figures: figureType[];
@@ -44,13 +49,36 @@ class DatabaseManager {
     }
   }
 
-  addPerson(options: figureType) {
-    const data = this.readData();
-    data.figures.push(options);
+  addPerson(options: figureTypeDTO) {
+    try {
+      const data = this.readData();
 
-    fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+      const id = generateRandomId();
+      data.figures.push({ ...options, id });
 
-    return data.figures;
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+
+      return data.figures;
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  updatePersonPosition(id: string, x: number, y: number) {
+    try {
+      const data = this.readData();
+
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      data.figures[index].points.x = x;
+      data.figures[index].points.y = y;
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+    } catch (error) {
+      console.log('error', error);
+    }
   }
 }
 

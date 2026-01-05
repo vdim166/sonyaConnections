@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Stage, Layer } from 'react-konva';
+import { useEffect, useRef, useState } from 'react';
+import { Stage, Layer, Line } from 'react-konva';
 import { TextInRect } from '../Figures/TextInRect';
 import { useAppContext } from '../../hooks/useAppContext';
 import './styles.css';
@@ -16,6 +16,30 @@ type ZoomableStageWithControlsProps = {
   zoom: number;
 };
 
+type Connection = { startAnchorId: string; endAnchorId: string };
+
+const throttle = (func: Function, limit: number) => {
+  let lastFunc: NodeJS.Timeout | null = null;
+  let lastRan: number | null = null;
+  return (...args: any[]) => {
+    if (lastRan === null) {
+      func(...args);
+      lastRan = Date.now();
+    } else {
+      if (lastFunc) clearTimeout(lastFunc);
+      lastFunc = setTimeout(
+        () => {
+          if (Date.now() - lastRan! >= limit) {
+            func(...args);
+            lastRan = Date.now();
+          }
+        },
+        limit - (Date.now() - lastRan!),
+      );
+    }
+  };
+};
+
 function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
   const { addModal } = useModalsManagerContext();
   const { stageRef, appState, setAppState } = useAppContext();
@@ -27,6 +51,14 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
   const scaleBy = 1.1;
   const minScale = 0.1;
   const maxScale = 5;
+
+  useEffect(() => {
+    if (!stageRef) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    stage.scale({ x: zoom, y: zoom });
+  }, [zoom]);
 
   const setZoom = async (newScale: number) => {
     await appSignals.setZoom(newScale);
@@ -154,14 +186,18 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
     const stage = e.target.getStage();
 
     if (!stage) return;
-    const pos = stage.getPointerPosition();
+    const pointer = stage.getPointerPosition();
 
-    if (!pos) return;
+    if (!pointer) return;
+
+    // Adjust pointer to content coordinates for accurate placement
+    const contentX = (pointer.x - stage.x()) / stage.scaleX();
+    const contentY = (pointer.y - stage.y()) / stage.scaleY();
 
     if (appState === APP_STATES.PICKING_PERSON) {
       const points = {
-        x: pos.x,
-        y: pos.y,
+        x: contentX,
+        y: contentY,
       };
 
       addModal({ type: MODALS_STATES.ADD_PERSON, props: { points } });
@@ -191,6 +227,171 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
     };
   }, []);
 
+  const [connections, setConnections] = useState<Connection[]>([]);
+  const [tempLine, setTempLine] = useState<number[] | null>(null); // [x1, y1, x2, y2] for temp line
+  const [renderKey, setRenderKey] = useState(0);
+
+  const throttledSetRenderKey = useRef(
+    throttle(() => setRenderKey((prev) => prev + 1), 16),
+  ).current;
+
+  // Map to store absolute positions of all anchors (update on drag end or render)
+  const anchorPositions = useRef<Map<string, { x: number; y: number }>>(
+    new Map(),
+  );
+
+  // Function to update anchor positions (call on mount or after drag)
+  const updateAnchorPosition = (
+    blockId: string,
+    side: string,
+    x: number,
+    y: number,
+  ) => {
+    const anchorId = `${blockId}-${side}`;
+    anchorPositions.current.set(anchorId, { x, y });
+  };
+
+  useEffect(() => {
+    if (persons) {
+      for (let i = 0; i < persons.length; ++i) {
+        const person = persons[i];
+
+        const sides = ['top', 'bottom', 'left', 'right'];
+
+        const rectWidth = 200;
+        const rectHeight = 150;
+        const anchors: { [key: string]: { x: number; y: number } } = {
+          top: { x: rectWidth / 2, y: 0 },
+          bottom: { x: rectWidth / 2, y: rectHeight },
+          left: { x: 0, y: rectHeight / 2 },
+          right: { x: rectWidth, y: rectHeight / 2 },
+        };
+
+        for (let j = 0; j < sides.length; ++j) {
+          updateAnchorPosition(
+            person.id,
+            sides[j],
+            person.points.x + anchors[sides[j]].x,
+            person.points.y + anchors[sides[j]].y,
+          );
+        }
+      }
+    }
+  }, [persons]);
+
+  const handlePositionChange = (
+    id: string,
+    newPoints: { x: number; y: number },
+  ) => {
+    setPersons(
+      (prev) =>
+        prev?.map((p) => (p.id === id ? { ...p, points: newPoints } : p)) ||
+        null,
+    );
+  };
+
+  const handleDragMoveUpdate = (
+    id: string,
+    tempPoints: { x: number; y: number },
+  ) => {
+    const rectWidth = 200;
+    const rectHeight = 150;
+    const anchors: { [key: string]: { x: number; y: number } } = {
+      top: { x: rectWidth / 2, y: 0 },
+      bottom: { x: rectWidth / 2, y: rectHeight },
+      left: { x: 0, y: rectHeight / 2 },
+      right: { x: rectWidth, y: rectHeight / 2 },
+    };
+    const sides = ['top', 'bottom', 'left', 'right'];
+
+    sides.forEach((side) => {
+      const rel = anchors[side];
+      updateAnchorPosition(
+        id,
+        side,
+        tempPoints.x + rel.x,
+        tempPoints.y + rel.y,
+      );
+    });
+
+    throttledSetRenderKey();
+  };
+
+  // In reality, call updateAnchorPosition after each block drag (use onDragEnd on Group)
+
+  const onStartConnection = (
+    anchorId: string,
+    startX: number,
+    startY: number,
+  ) => {
+    if (!stageRef) return;
+    setTempLine([startX, startY, startX, startY]); // Start temp line at anchor
+
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    // Add mouse move listener for temp line
+    const handleMouseMove = () => {
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+
+      const contentPointerX = (pointer.x - stage.x()) / stage.scaleX();
+      const contentPointerY = (pointer.y - stage.y()) / stage.scaleY();
+
+      setTempLine([startX, startY, contentPointerX, contentPointerY]);
+    };
+
+    // Add mouse up listener to end connection
+    const handleMouseUp = () => {
+      const pointer = stage.getPointerPosition();
+      if (!pointer) {
+        // Clean up
+        setTempLine(null);
+        stage.off('mousemove', handleMouseMove);
+        stage.off('mouseup', handleMouseUp);
+        return;
+      }
+
+      const contentPointerX = (pointer.x - stage.x()) / stage.scaleX();
+      const contentPointerY = (pointer.y - stage.y()) / stage.scaleY();
+
+      // Check if over another anchor (iterate map to find closest within threshold)
+      let targetAnchorId: string | null = null;
+      const threshold = 10 / stage.scaleX(); // Adjust threshold for zoom level
+      anchorPositions.current.forEach((pos, id) => {
+        if (
+          id !== anchorId &&
+          Math.hypot(pos.x - contentPointerX, pos.y - contentPointerY) <
+            threshold
+        ) {
+          targetAnchorId = id;
+        }
+      });
+
+      if (targetAnchorId) {
+        // Create persistent connection
+        setConnections((prev) => [
+          ...prev,
+          {
+            startAnchorId: anchorId || '',
+            endAnchorId: targetAnchorId || '',
+          },
+        ]);
+      }
+
+      // Clean up
+      setTempLine(null);
+      stage.off('mousemove', handleMouseMove);
+      stage.off('mouseup', handleMouseUp);
+    };
+
+    stage.on('mousemove', handleMouseMove);
+    stage.on('mouseup', handleMouseUp);
+  };
+
+  const getAnchorPosition = (anchorId: string) =>
+    anchorPositions.current.get(anchorId) || null;
+
   return (
     <div>
       <div className="zoom-menu">
@@ -216,8 +417,44 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
       >
         <Layer>
           {persons?.map((p) => {
-            return <TextInRect options={p} />;
+            return (
+              <TextInRect
+                key={p.name}
+                onStartConnection={onStartConnection}
+                options={{ ...p }}
+                onPositionChange={(newPoints) =>
+                  handlePositionChange(p.id, newPoints)
+                }
+                onDragMoveUpdate={(tempPoints) =>
+                  handleDragMoveUpdate(p.id, tempPoints)
+                }
+              />
+            );
           })}
+          {connections.map((conn, index) => {
+            const startPos = getAnchorPosition(conn.startAnchorId);
+            const endPos = getAnchorPosition(conn.endAnchorId);
+            if (!startPos || !endPos) return null;
+            return (
+              <Line
+                key={index}
+                points={[startPos.x, startPos.y, endPos.x, endPos.y]}
+                stroke="#00796b"
+                strokeWidth={2}
+                dash={[5, 5]} // Optional: dashed for Miro-like
+              />
+            );
+          })}
+
+          {/* Render temporary line during connection */}
+          {tempLine && (
+            <Line
+              points={tempLine}
+              stroke="#00796b"
+              strokeWidth={2}
+              dash={[5, 5]}
+            />
+          )}
         </Layer>
       </Stage>
     </div>

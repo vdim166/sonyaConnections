@@ -6,8 +6,6 @@ import { UniversalModal } from '../modals/UniversalModal';
 export const ModalsManager = () => {
   const { modalState, modalProps } = useModalsManagerContext();
 
-  console.log('modalState', modalState);
-
   if (modalState === MODALS_STATES.ADD_PERSON) {
     return (
       <UniversalModal>

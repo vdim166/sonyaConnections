@@ -20,6 +20,10 @@ class AppSignals {
   ) => {
     return await window.electron.ipcRenderer.addPerson({ name, points });
   };
+
+  updatePersonPosition = async (id: string, x: number, y: number) => {
+    return await window.electron.ipcRenderer.updatePersonPosition(id, x, y);
+  };
 }
 
 export const appSignals = new AppSignals();

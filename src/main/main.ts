@@ -133,6 +133,10 @@ ipcMain.handle(APP_SIGNALS.GET_PERSONS, (_event) => {
   return databaseManager.getFigures();
 });
 
+ipcMain.handle(APP_SIGNALS.UPDATE_PERSON_POSITION, (_event, id, x, y) => {
+  return databaseManager.updatePersonPosition(id, x, y);
+});
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed

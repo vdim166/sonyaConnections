@@ -50,7 +50,7 @@ export const AddPersonModal = ({ points }: AddPersonModalType) => {
           }}
         />
 
-        <Button onClick={handleSubmit}>Hello</Button>
+        <Button onClick={handleSubmit}>Сохранить</Button>
       </div>
     </div>
   );

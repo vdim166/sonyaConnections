@@ -2,7 +2,7 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { APP_SIGNALS } from './consts';
-import { figureType } from './classes/databaseManager';
+import { figureType, figureTypeDTO } from './classes/databaseManager';
 
 export type Channels = 'ipc-example';
 
@@ -32,11 +32,15 @@ const electronHandler = {
       return ipcRenderer.invoke(APP_SIGNALS.GET_ZOOM);
     },
 
-    addPerson(options: figureType) {
+    addPerson(options: figureTypeDTO) {
       return ipcRenderer.invoke(APP_SIGNALS.ADD_PERSON, options);
     },
     getPersons() {
       return ipcRenderer.invoke(APP_SIGNALS.GET_PERSONS);
+    },
+
+    updatePersonPosition(id: string, x: number, y: number) {
+      return ipcRenderer.invoke(APP_SIGNALS.UPDATE_PERSON_POSITION, id, x, y);
     },
   },
 };
