@@ -1,17 +1,29 @@
-.zoom-menu {
-  position: absolute;
-  bottom: 20px;
-  right: 0;
-}
-
-.zoom-pos-info {
-  color: black;
-}
-
-.zoom-number-info {
-  color: black;
-}
-
 .picking {
   cursor: crosshair;
+}
+
+#stage-container {
+  width: 100vw; /* Full width */
+  height: 100vh; /* Full height */
+  background-size: cover; /* Ensures gradients fill the area */
+  background-repeat: no-repeat;
+  background-position: center;
+
+  /* Combine linear and radial gradients as multiple backgrounds */
+  background-image:
+    /* Radial gradient (second Rect, overlaid for depth) */
+    radial-gradient(
+      circle at 600px 400px,
+      /* Center point; adjust based on your viewport size */
+        rgba(16, 42, 115, 0.8) 0%,
+      /* Start color */ rgba(10, 25, 47, 0.6) 50%,
+      /* Mid color */ rgba(5, 15, 30, 0.9) 100% /* End color */
+    ),
+    /* Linear gradient (first Rect, as the base) */
+      linear-gradient(
+        to bottom right,
+        /* Diagonal direction; approximates (0,0) to (1200,800) */ #0a192f 0%,
+        /* Dark blue start */ #112240 50%,
+        /* Mid blue */ #1a365d 100% /* Lighter blue end */
+      );
 }

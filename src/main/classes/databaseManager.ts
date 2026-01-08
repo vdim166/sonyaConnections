@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
 import { generateRandomId } from '../utils/generateRandomId';
+import { connectionType } from '../../renderer/components/ZoomableStageWithControls';
 
 const userDataPath = app.getPath('userData');
 const mainFolder = path.join(userDataPath, 'sonyaConnections');
@@ -20,6 +21,7 @@ export type figureType = {
 
 type dataType = {
   figures: figureType[];
+  connections: connectionType[];
 };
 
 class DatabaseManager {
@@ -29,6 +31,7 @@ class DatabaseManager {
     if (!fs.existsSync(this.dataPath)) {
       const init: dataType = {
         figures: [],
+        connections: [],
       };
       fs.writeFileSync(this.dataPath, JSON.stringify(init), 'utf-8');
     }
@@ -74,6 +77,39 @@ class DatabaseManager {
 
       data.figures[index].points.x = x;
       data.figures[index].points.y = y;
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  getConnections() {
+    try {
+      const data = this.readData();
+
+      return data.connections;
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  addConnection(con: connectionType) {
+    try {
+      const data = this.readData();
+
+      data.connections.push(con);
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  deleteConnection(id: string) {
+    try {
+      const data = this.readData();
+
+      data.connections = data.connections.filter((item) => item.id !== id);
 
       fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
     } catch (error) {

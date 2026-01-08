@@ -1,0 +1,52 @@
+.zoom-menu {
+  position: absolute;
+  bottom: 20px;
+  right: 10px;
+
+  z-index: 100;
+}
+
+.zoom-pos-info {
+  color: black;
+}
+
+.zoom-number-info {
+  color: white;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.zoom-reset {
+  color: white;
+  background-color: black;
+  border: 1px solid white;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.zoom-reset:hover {
+  cursor: pointer;
+  background-color: rgb(70, 65, 65);
+}
+
+.zoom-reset:active {
+  background-color: rgb(117, 112, 112);
+}
+
+.zoom-man-button {
+  height: 20px;
+  width: 20px;
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.zoom-man-button:hover {
+  background-color: rgb(70, 65, 65);
+}
+
+.zoom-man-button:active {
+  background-color: rgb(117, 112, 112);
+}

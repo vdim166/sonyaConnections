@@ -3,6 +3,8 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { APP_SIGNALS } from './consts';
 import { figureType, figureTypeDTO } from './classes/databaseManager';
+import { pointsType } from './types/pointsType';
+import { connectionType } from '../renderer/components/ZoomableStageWithControls';
 
 export type Channels = 'ipc-example';
 
@@ -41,6 +43,26 @@ const electronHandler = {
 
     updatePersonPosition(id: string, x: number, y: number) {
       return ipcRenderer.invoke(APP_SIGNALS.UPDATE_PERSON_POSITION, id, x, y);
+    },
+
+    getCanvasPosition() {
+      return ipcRenderer.invoke(APP_SIGNALS.GET_CANVAS_POSITION);
+    },
+
+    saveCanvasPosition(newPos: pointsType) {
+      return ipcRenderer.invoke(APP_SIGNALS.SAVE_CANVAS_POSITION, newPos);
+    },
+
+    getConnections() {
+      return ipcRenderer.invoke(APP_SIGNALS.GET_ALL_CONNECTIONS);
+    },
+
+    addConnection(con: connectionType) {
+      return ipcRenderer.invoke(APP_SIGNALS.ADD_CONNECTION, con);
+    },
+
+    deleteConnection(id: string) {
+      return ipcRenderer.invoke(APP_SIGNALS.DELETE_CONNECTION, id);
     },
   },
 };

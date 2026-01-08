@@ -1,0 +1,36 @@
+.figure-action-menu {
+  position: fixed;
+
+  /* Автоматическая ширина под содержимое */
+  width: fit-content;
+
+  /* Внутри — горизонтальный flex с центрированием */
+  display: flex;
+  justify-content: center; /* кнопки по центру блока */
+  align-items: center; /* по вертикали тоже по центру (если нужно) */
+
+  border-radius: 5px;
+  z-index: 150;
+
+  gap: 5px;
+
+  transform: translate(-50%, -50%);
+}
+
+.action-menu-button {
+  background-color: white;
+  border: none;
+  border-radius: 5px;
+
+  width: 35px;
+  height: 35px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-menu-button:hover {
+  transform: scale(1.1);
+  cursor: pointer;
+}

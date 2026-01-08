@@ -11,40 +11,52 @@ import { useModalsManagerContext } from '../../hooks/useModalsManagerContext';
 import { MODALS_STATES } from '../../context/ModalsManagerContext';
 import { figureType } from '../../../main/classes/databaseManager';
 import { FETCH_SIGNALS } from '../../classes/consts/FETCH_SIGNALS';
+import { pointsType } from '../../../main/types/pointsType';
+import { ZoomMenu } from '../ZoomMenu';
+import { Connection } from '../Figures/Connection';
+import { generateRandomId } from '../../../main/utils/generateRandomId';
 
-type ZoomableStageWithControlsProps = {
-  zoom: number;
+export type connectionType = {
+  startAnchorId: string;
+  endAnchorId: string;
+  id: string;
 };
 
-type Connection = { startAnchorId: string; endAnchorId: string };
+// const throttle = (func: Function, limit: number) => {
+//   let lastFunc: NodeJS.Timeout | null = null;
+//   let lastRan: number | null = null;
+//   return (...args: any[]) => {
+//     if (lastRan === null) {
+//       func(...args);
+//       lastRan = Date.now();
+//     } else {
+//       if (lastFunc) clearTimeout(lastFunc);
+//       lastFunc = setTimeout(
+//         () => {
+//           if (Date.now() - lastRan! >= limit) {
+//             func(...args);
+//             lastRan = Date.now();
+//           }
+//         },
+//         limit - (Date.now() - lastRan!),
+//       );
+//     }
+//   };
+// };
 
-const throttle = (func: Function, limit: number) => {
-  let lastFunc: NodeJS.Timeout | null = null;
-  let lastRan: number | null = null;
-  return (...args: any[]) => {
-    if (lastRan === null) {
-      func(...args);
-      lastRan = Date.now();
-    } else {
-      if (lastFunc) clearTimeout(lastFunc);
-      lastFunc = setTimeout(
-        () => {
-          if (Date.now() - lastRan! >= limit) {
-            func(...args);
-            lastRan = Date.now();
-          }
-        },
-        limit - (Date.now() - lastRan!),
-      );
-    }
-  };
-};
-
-function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
+function ZoomableStageWithControls() {
   const { addModal } = useModalsManagerContext();
-  const { stageRef, appState, setAppState } = useAppContext();
-  const [scale, setScale] = useState(zoom);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const {
+    stageRef,
+    appState,
+    setAppState,
+    scale,
+    selected,
+    setScale,
+    setPosition,
+    setSelected,
+    setActionMenu,
+  } = useAppContext();
 
   const [persons, setPersons] = useState<figureType[] | null>(null);
 
@@ -53,130 +65,103 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
   const maxScale = 5;
 
   useEffect(() => {
+    const handle = async (e: KeyboardEvent) => {
+      if (selected === null) return;
+
+      if (e.key === 'Delete') {
+        if (selected.type === 'FIGURE') {
+          // await appSignals.deleteFigure(selected.id);
+        } else if (selected.type === 'CONNECTION') {
+          await appSignals.deleteConnection(selected.id);
+
+          setConnections((prev) => {
+            return [...prev].filter((item) => item.id !== selected.id);
+          });
+        }
+
+        setSelected(null);
+      }
+    };
+
+    window.addEventListener('keydown', handle);
+
+    return () => {
+      window.removeEventListener('keydown', handle);
+    };
+  }, [selected]);
+
+  useEffect(() => {
+    const getCanvasPosition = async () => {
+      try {
+        const pos: pointsType | undefined =
+          await appSignals.getCanvasPosition();
+
+        if (pos && stageRef && stageRef.current) {
+          stageRef.current.position(pos);
+
+          setPosition(pos);
+        }
+      } catch (error) {
+        console.log('error', error);
+      }
+    };
+
+    getCanvasPosition();
+  }, []);
+
+  useEffect(() => {
     if (!stageRef) return;
     const stage = stageRef.current;
     if (!stage) return;
 
-    stage.scale({ x: zoom, y: zoom });
-  }, [zoom]);
+    if (scale) stage.scale({ x: scale, y: scale });
+  }, [scale]);
 
   const setZoom = async (newScale: number) => {
     await appSignals.setZoom(newScale);
   };
 
-  const handleWheel = (e: KonvaEventObject<WheelEvent, Node<NodeConfig>>) => {
-    if (!stageRef) return;
+  const handleWheel = async (
+    e: KonvaEventObject<WheelEvent, Node<NodeConfig>>,
+  ) => {
+    try {
+      if (!stageRef) return;
 
-    e.evt.preventDefault();
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const oldScale = stage.scaleX();
-    const pointer = stage.getPointerPosition();
-
-    if (!pointer) return;
-
-    const mousePointTo = {
-      x: (pointer.x - stage.x()) / oldScale,
-      y: (pointer.y - stage.y()) / oldScale,
-    };
-
-    let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
-
-    // Ограничения масштаба
-    newScale = Math.max(minScale, Math.min(maxScale, newScale));
-
-    stage.scale({ x: newScale, y: newScale });
-
-    const newPos = {
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
-    };
-
-    stage.position(newPos);
-    setScale(newScale);
-    setZoom(newScale);
-    setPosition(newPos);
-    stage.batchDraw();
-  };
-
-  const zoomIn = () => {
-    if (!stageRef) return;
-    const stage = stageRef.current;
-    if (!stage) return;
-    const oldScale = stage.scaleX();
-    let newScale = oldScale * scaleBy;
-
-    if (newScale > maxScale) return;
-
-    const center = {
-      x: stage.width() / 2,
-      y: stage.height() / 2,
-    };
-
-    const mousePointTo = {
-      x: (center.x - stage.x()) / oldScale,
-      y: (center.y - stage.y()) / oldScale,
-    };
-
-    stage.scale({ x: newScale, y: newScale });
-
-    const newPos = {
-      x: center.x - mousePointTo.x * newScale,
-      y: center.y - mousePointTo.y * newScale,
-    };
-
-    stage.position(newPos);
-    setScale(newScale);
-    setZoom(newScale);
-    setPosition(newPos);
-    stage.batchDraw();
-  };
-
-  const zoomOut = () => {
-    if (!stageRef) return;
-    const stage = stageRef.current;
-    if (!stage) return;
-    const oldScale = stage.scaleX();
-    let newScale = oldScale / scaleBy;
-
-    if (newScale < minScale) return;
-
-    const center = {
-      x: stage.width() / 2,
-      y: stage.height() / 2,
-    };
-
-    const mousePointTo = {
-      x: (center.x - stage.x()) / oldScale,
-      y: (center.y - stage.y()) / oldScale,
-    };
-
-    stage.scale({ x: newScale, y: newScale });
-
-    const newPos = {
-      x: center.x - mousePointTo.x * newScale,
-      y: center.y - mousePointTo.y * newScale,
-    };
-
-    stage.position(newPos);
-    setScale(newScale);
-    setZoom(newScale);
-    setPosition(newPos);
-    stage.batchDraw();
-  };
-
-  const resetZoom = () => {
-    if (stageRef) {
+      e.evt.preventDefault();
       const stage = stageRef.current;
       if (!stage) return;
 
-      stage.scale({ x: 1, y: 1 });
-      stage.position({ x: 0, y: 0 });
-      setScale(1);
-      setZoom(1);
-      setPosition({ x: 0, y: 0 });
+      const oldScale = stage.scaleX();
+      const pointer = stage.getPointerPosition();
+
+      if (!pointer) return;
+
+      const mousePointTo = {
+        x: (pointer.x - stage.x()) / oldScale,
+        y: (pointer.y - stage.y()) / oldScale,
+      };
+
+      let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+
+      // Ограничения масштаба
+      newScale = Math.max(minScale, Math.min(maxScale, newScale));
+
+      stage.scale({ x: newScale, y: newScale });
+
+      const newPos = {
+        x: pointer.x - mousePointTo.x * newScale,
+        y: pointer.y - mousePointTo.y * newScale,
+      };
+
+      stage.position(newPos);
+      setScale(newScale);
+      setZoom(newScale);
+      setPosition(newPos);
       stage.batchDraw();
+
+      await appSignals.saveCanvasPosition(newPos);
+    } catch (error) {
+      console.log('error', error);
     }
   };
 
@@ -227,13 +212,14 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
     };
   }, []);
 
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [tempLine, setTempLine] = useState<number[] | null>(null); // [x1, y1, x2, y2] for temp line
-  const [renderKey, setRenderKey] = useState(0);
+  const [connections, setConnections] = useState<connectionType[]>([]);
 
-  const throttledSetRenderKey = useRef(
-    throttle(() => setRenderKey((prev) => prev + 1), 16),
-  ).current;
+  const [tempLine, setTempLine] = useState<number[] | null>(null); // [x1, y1, x2, y2] for temp line
+  // const [renderKey, setRenderKey] = useState(0);
+
+  // const throttledSetRenderKey = useRef(
+  //   throttle(() => setRenderKey((prev) => prev + 1), 16),
+  // ).current;
 
   // Map to store absolute positions of all anchors (update on drag end or render)
   const anchorPositions = useRef<Map<string, { x: number; y: number }>>(
@@ -276,6 +262,18 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
           );
         }
       }
+
+      const fetchConnections = async () => {
+        try {
+          const connections = await appSignals.getConnections();
+
+          setConnections(connections);
+        } catch (error) {
+          console.log('error', error);
+        }
+      };
+
+      fetchConnections();
     }
   }, [persons]);
 
@@ -314,10 +312,8 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
       );
     });
 
-    throttledSetRenderKey();
+    // throttledSetRenderKey();
   };
-
-  // In reality, call updateAnchorPosition after each block drag (use onDragEnd on Group)
 
   const onStartConnection = (
     anchorId: string,
@@ -342,7 +338,7 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
     };
 
     // Add mouse up listener to end connection
-    const handleMouseUp = () => {
+    const handleMouseUp = async () => {
       const pointer = stage.getPointerPosition();
       if (!pointer) {
         // Clean up
@@ -369,14 +365,20 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
       });
 
       if (targetAnchorId) {
-        // Create persistent connection
-        setConnections((prev) => [
-          ...prev,
-          {
+        try {
+          const newConnection = {
             startAnchorId: anchorId || '',
             endAnchorId: targetAnchorId || '',
-          },
-        ]);
+            id: generateRandomId(),
+          };
+
+          // Create persistent connection
+          setConnections((prev) => [...prev, newConnection]);
+
+          await appSignals.addConnection(newConnection);
+        } catch (error) {
+          console.log('error', error);
+        }
       }
 
       // Clean up
@@ -392,30 +394,44 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
   const getAnchorPosition = (anchorId: string) =>
     anchorPositions.current.get(anchorId) || null;
 
+  const handleDragEnd = async (
+    e: KonvaEventObject<DragEvent, Node<NodeConfig>>,
+  ) => {
+    if (e.target !== e.currentTarget) return;
+
+    try {
+      const stage = e.target.getStage(); // Get the stage from the dragged node
+
+      if (stage) {
+        const newPos = e.target.position();
+
+        await appSignals.saveCanvasPosition(newPos);
+      }
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
+
   return (
     <div>
-      <div className="zoom-menu">
-        <button onClick={zoomOut}>-</button>
-        <span className="zoom-number-info">{Math.round(scale * 100)}%</span>
-        <button onClick={zoomIn}>+</button>
-        <button onClick={resetZoom} style={{ marginLeft: '10px' }}>
-          Сброс
-        </button>
-        <span className="zoom-pos-info">
-          Позиция: {Math.round(position.x)}, {Math.round(position.y)}
-        </span>
-      </div>
+      <ZoomMenu scaleBy={scaleBy} maxScale={maxScale} minScale={minScale} />
 
       <Stage
         ref={stageRef}
         width={window.innerWidth}
         height={window.innerHeight}
         onWheel={handleWheel}
-        draggable
+        id="stage-container"
         className={`${appState === APP_STATES.PICKING_PERSON ? 'picking' : ''}`}
         onClick={handleStageClick}
+        onDragEnd={handleDragEnd}
+        draggable
+        onDblClick={() => {
+          setSelected(null);
+          setActionMenu(null);
+        }}
       >
-        <Layer>
+        <Layer draggable>
           {persons?.map((p) => {
             return (
               <TextInRect
@@ -431,18 +447,9 @@ function ZoomableStageWithControls({ zoom }: ZoomableStageWithControlsProps) {
               />
             );
           })}
-          {connections.map((conn, index) => {
-            const startPos = getAnchorPosition(conn.startAnchorId);
-            const endPos = getAnchorPosition(conn.endAnchorId);
-            if (!startPos || !endPos) return null;
+          {connections.map((conn) => {
             return (
-              <Line
-                key={index}
-                points={[startPos.x, startPos.y, endPos.x, endPos.y]}
-                stroke="#00796b"
-                strokeWidth={2}
-                dash={[5, 5]} // Optional: dashed for Miro-like
-              />
+              <Connection conn={conn} getAnchorPosition={getAnchorPosition} />
             );
           })}
 

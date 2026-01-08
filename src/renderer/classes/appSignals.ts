@@ -1,3 +1,6 @@
+import { pointsType } from '../../main/types/pointsType';
+import { connectionType } from '../components/ZoomableStageWithControls';
+
 class AppSignals {
   setZoom = async (newScale: number) => {
     await window.electron.ipcRenderer.setZoom(newScale);
@@ -23,6 +26,26 @@ class AppSignals {
 
   updatePersonPosition = async (id: string, x: number, y: number) => {
     return await window.electron.ipcRenderer.updatePersonPosition(id, x, y);
+  };
+
+  getCanvasPosition = async () => {
+    return await window.electron.ipcRenderer.getCanvasPosition();
+  };
+
+  saveCanvasPosition = async (newPos: pointsType) => {
+    return await window.electron.ipcRenderer.saveCanvasPosition(newPos);
+  };
+
+  getConnections = async () => {
+    return await window.electron.ipcRenderer.getConnections();
+  };
+
+  addConnection = async (con: connectionType) => {
+    return await window.electron.ipcRenderer.addConnection(con);
+  };
+
+  deleteConnection = async (id: string) => {
+    return await window.electron.ipcRenderer.deleteConnection(id);
   };
 }
 

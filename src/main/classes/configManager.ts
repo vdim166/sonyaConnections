@@ -1,9 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
+import { pointsType } from '../types/pointsType';
 
 type ConfigType = {
   zoom: number;
+  lastPosition?: pointsType;
 };
 
 const userDataPath = app.getPath('userData');
@@ -54,6 +56,29 @@ class ConfigManager {
     } catch (error) {
       console.log('error', error);
       return 1;
+    }
+  }
+
+  getCansvasPosition(): pointsType | undefined {
+    try {
+      const data = this.readData();
+      if (!data) return undefined;
+      return data.lastPosition;
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  setCanvasPosition(newPos: pointsType) {
+    try {
+      const data = this.readData();
+
+      if (!data) return;
+
+      data.lastPosition = newPos;
+      fs.writeFileSync(this.configPath, JSON.stringify(data), 'utf-8');
+    } catch (error) {
+      console.log('error', error);
     }
   }
 }

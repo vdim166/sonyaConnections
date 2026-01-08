@@ -1,9 +1,10 @@
 // @ts-ignore
 import Konva from 'konva';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Group, Rect, Text, Circle } from 'react-konva';
 import { figureType } from '../../../../main/classes/databaseManager';
 import { appSignals } from '../../../classes/appSignals';
+import { useAppContext } from '../../../hooks/useAppContext';
 
 type AnchorSide = 'top' | 'bottom' | 'left' | 'right';
 
@@ -22,6 +23,10 @@ export const TextInRect = ({
 }: TextInRectProps) => {
   const [textX, setTextX] = useState(0);
   const [textY, setTextY] = useState(0);
+
+  const { selected, setSelected, setActionMenu } = useAppContext();
+
+  const groupRef = useRef<Konva.Group>(null);
 
   const rectWidth = 200;
   const rectHeight = 150;
@@ -68,27 +73,67 @@ export const TextInRect = ({
     }
   };
 
+  const handleGroupDoubleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    // Your logic here, e.g., edit the group, select it, open a modal, etc.
+
+    setSelected({ id: options.id, type: 'FIGURE' });
+
+    // Optional: Access the group node
+    // const group = e.target;
+
+    // const rect = group.getClientRect(); // { x, y, width, height }
+
+    // const topY = rect.y;
+
+    // const X = rect.x + rect.width / 2;
+    // console.log('topY', topY);
+    // console.log('X', X);
+
+    const group = groupRef.current as Konva.Group;
+    const stage = group.getStage();
+
+    if (!stage) return;
+
+    // 1. Получаем абсолютные координаты группы относительно stage (с учётом детей, scale, rotation)
+    const { x: groupX, y: groupY, width } = group.getClientRect();
+
+    // 2. Получаем DOM-элемент контейнера stage (<div> от Konva)
+    const container = stage.container(); // Это div с классом konvajs-content или твой container
+
+    // 3. Получаем позицию этого div относительно окна браузера
+    const containerRect = container.getBoundingClientRect();
+
+    // 4. Итоговые координаты верхней границы группы относительно окна
+    const screenTopY = containerRect.top + groupY;
+    const screenLeftX = containerRect.left + groupX;
+
+    setActionMenu({ x: screenLeftX + width / 2, y: screenTopY });
+    // Prevent further bubbling if needed (e.g., to stage or layer)
+    e.cancelBubble = true;
+  };
+
   return (
     <Group
       x={options.points.x}
       y={options.points.y}
       draggable={true}
+      ref={groupRef}
+      clasName="text-in-rect-group"
       onDragMove={(e) => {
         onDragMoveUpdate({ x: e.target.x(), y: e.target.y() });
       }}
       onDragEnd={(e) => {
-        console.log('dxsadsaxx');
         updatePersonPosition(options.id, e.target.x(), e.target.y());
-
         onPositionChange({ x: e.target.x(), y: e.target.y() });
       }}
+      onDblClick={handleGroupDoubleClick}
     >
       <Rect
         width={rectWidth}
         height={rectHeight}
         fill="#e0f7fa"
         stroke="#00796b"
-        strokeWidth={1}
+        strokeWidth={selected?.id === options.id ? 5 : 1}
       />
       <Text
         x={textX}

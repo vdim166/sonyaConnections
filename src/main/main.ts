@@ -18,6 +18,8 @@ import fs from 'fs';
 import { APP_SIGNALS } from './consts';
 import { configManager } from './classes/configManager';
 import { databaseManager } from './classes/databaseManager';
+import { pointsType } from './types/pointsType';
+import { connectionType } from '../renderer/components/ZoomableStageWithControls';
 
 export const userDataPath = app.getPath('userData');
 export const mainFolder = path.join(userDataPath, 'sonyaConnections');
@@ -135,6 +137,29 @@ ipcMain.handle(APP_SIGNALS.GET_PERSONS, (_event) => {
 
 ipcMain.handle(APP_SIGNALS.UPDATE_PERSON_POSITION, (_event, id, x, y) => {
   return databaseManager.updatePersonPosition(id, x, y);
+});
+
+ipcMain.handle(APP_SIGNALS.GET_CANVAS_POSITION, () => {
+  return configManager.getCansvasPosition();
+});
+
+ipcMain.handle(
+  APP_SIGNALS.SAVE_CANVAS_POSITION,
+  (_event, newPos: pointsType) => {
+    return configManager.setCanvasPosition(newPos);
+  },
+);
+
+ipcMain.handle(APP_SIGNALS.GET_ALL_CONNECTIONS, (_event) => {
+  return databaseManager.getConnections();
+});
+
+ipcMain.handle(APP_SIGNALS.ADD_CONNECTION, (_event, con: connectionType) => {
+  return databaseManager.addConnection(con);
+});
+
+ipcMain.handle(APP_SIGNALS.DELETE_CONNECTION, (_event, id: string) => {
+  return databaseManager.deleteConnection(id);
 });
 
 app.on('window-all-closed', () => {
