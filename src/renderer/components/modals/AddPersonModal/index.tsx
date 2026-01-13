@@ -12,20 +12,24 @@ export type AddPersonModalType = {
     x: number;
     y: number;
   };
+
+  isBlock: boolean;
 };
 
-export const AddPersonModal = ({ points }: AddPersonModalType) => {
+export const AddPersonModal = ({ points, isBlock: ib }: AddPersonModalType) => {
   const { closeModals } = useModalsManagerContext();
 
   const [name, setName] = useState('');
+
+  const [isBlock, setIsBlock] = useState(ib);
 
   const handleSubmit = async () => {
     try {
       if (!name) return;
 
-      await appSignals.addPerson(name, points);
+      await appSignals.addPerson({ name, points, isBlock });
 
-      window.dispatchEvent(new Event(FETCH_SIGNALS.FETCH_PERSONS));
+      window.dispatchEvent(new Event(FETCH_SIGNALS.FETCH_FIGURES));
       closeModals();
     } catch (error) {
       console.log('error', error);
@@ -39,16 +43,28 @@ export const AddPersonModal = ({ points }: AddPersonModalType) => {
           closeModals();
         }}
       />
-      <p className="add-person-modal-title">Добавить пользователя</p>
+      <p className="add-person-modal-title">
+        {isBlock ? 'Добавить блок' : 'Добавить пользователя'}
+      </p>
 
       <div className="add-person-modal-container">
-        <p>Введите имя пользователя</p>
+        <p>{isBlock ? 'Введите имя блока' : 'Введите имя пользователя'}</p>
         <TextArea
+          className="add-person-modal-textarea"
           value={name}
           onChange={(e) => {
             setName(e.target.value);
           }}
         />
+
+        <div className="add-person-modal-is-block">
+          <input
+            type="checkbox"
+            checked={isBlock}
+            onChange={(e) => setIsBlock(e.target.checked)}
+          />{' '}
+          <p>Is block?</p>
+        </div>
 
         <Button onClick={handleSubmit}>Сохранить</Button>
       </div>

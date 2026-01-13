@@ -131,12 +131,16 @@ ipcMain.handle(APP_SIGNALS.ADD_PERSON, (_event, options) => {
   return databaseManager.addPerson(options);
 });
 
-ipcMain.handle(APP_SIGNALS.GET_PERSONS, (_event) => {
+ipcMain.handle(APP_SIGNALS.GET_FIGURES, (_event) => {
   return databaseManager.getFigures();
 });
 
 ipcMain.handle(APP_SIGNALS.UPDATE_PERSON_POSITION, (_event, id, x, y) => {
   return databaseManager.updatePersonPosition(id, x, y);
+});
+
+ipcMain.handle(APP_SIGNALS.UPDATE_FIGURE_NAME, (_event, id, name) => {
+  return databaseManager.updateFigureName(id, name);
 });
 
 ipcMain.handle(APP_SIGNALS.GET_CANVAS_POSITION, () => {
@@ -160,6 +164,10 @@ ipcMain.handle(APP_SIGNALS.ADD_CONNECTION, (_event, con: connectionType) => {
 
 ipcMain.handle(APP_SIGNALS.DELETE_CONNECTION, (_event, id: string) => {
   return databaseManager.deleteConnection(id);
+});
+
+ipcMain.handle(APP_SIGNALS.DELETE_FIGURE, (_event, id: string) => {
+  return databaseManager.deleteFigure(id);
 });
 
 app.on('window-all-closed', () => {

@@ -1,0 +1,52 @@
+.open-diary-modal {
+  background-color: white;
+  height: 100vh;
+  width: 100vw;
+}
+
+.open-diary-modal-back-arrow {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+.open-diary-modal-back-arrow:hover {
+  cursor: pointer;
+}
+
+.open-diary-modal-back-arrow:hover path {
+  stroke: gray;
+}
+
+.open-diary-modal-back-arrow:active path {
+  stroke: rgb(70, 69, 69);
+}
+
+.open-diary-modal-title {
+  font-size: 50px;
+  text-align: center;
+}
+
+.open-diary-modal-sidebar {
+  max-width: 200px;
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 2px;
+
+  overflow: hidden auto;
+  max-height: 60vh;
+}
+
+.open-diary-modal-sidebar::-webkit-scrollbar {
+  width: 0px;
+}
+
+.open-diary-modal-main {
+  display: flex;
+
+  gap: 10px;
+  padding-right: 5px;
+}

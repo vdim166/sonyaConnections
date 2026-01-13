@@ -1,0 +1,63 @@
+.open-diary-modal-children {
+  height: 30px;
+  border: 1px solid black;
+
+  background-color: rgb(123, 123, 190);
+  color: white;
+  border-radius: 2px;
+  display: flex;
+  padding-left: 5px;
+  align-items: center;
+}
+
+.open-diary-modal-children-container {
+  width: 80%;
+  position: relative;
+}
+
+.open-diary-modal-children:hover {
+  cursor: pointer;
+  background-color: rgb(96, 96, 155);
+}
+
+.open-diary-modal-children:active {
+  background-color: rgb(76, 76, 119);
+}
+
+.open-diary-modal-children-active {
+  background-color: rgb(76, 76, 119);
+}
+
+.open-diary-modal-children-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+
+  flex-direction: column;
+  gap: 5px;
+}
+
+.open-diary-modal-children-arrow-down {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+
+  height: 20px;
+}
+
+.open-diary-modal-children-arrow-down:hover {
+  cursor: pointer;
+}
+
+.open-diary-modal-children-arrow-down:hover path {
+  fill: white;
+}
+
+.open-diary-modal-children-arrow-down:active path {
+  fill: rgb(228, 222, 222);
+}
+
+.open-diary-modal-children-arrow-down-active path {
+  fill: rgb(228, 222, 222);
+}

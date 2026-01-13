@@ -1,7 +1,7 @@
 export const Person = () => {
   return (
     <svg
-      fill="#000000"
+      fill="white"
       width="20px"
       height="20px"
       viewBox="0 0 32 32"

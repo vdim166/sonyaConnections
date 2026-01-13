@@ -1,3 +1,3 @@
 export const FETCH_SIGNALS = {
-  FETCH_PERSONS: 'FETCH_PERSONS',
+  FETCH_FIGURES: 'FETCH_FIGURES',
 } as const;

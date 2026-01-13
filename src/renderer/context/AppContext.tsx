@@ -6,6 +6,7 @@ import { pointsType } from '../../main/types/pointsType';
 export const APP_STATES = {
   IDLE: 'IDLE',
   PICKING_PERSON: 'PICKING_PERSON',
+  PICKING_BLOCK: 'PICKING_BLOCK',
 } as const;
 
 export type selectedType = {

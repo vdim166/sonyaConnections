@@ -58,7 +58,7 @@ function ZoomableStageWithControls() {
     setActionMenu,
   } = useAppContext();
 
-  const [persons, setPersons] = useState<figureType[] | null>(null);
+  const [figures, setFigures] = useState<figureType[] | null>(null);
 
   const scaleBy = 1.1;
   const minScale = 0.1;
@@ -70,15 +70,12 @@ function ZoomableStageWithControls() {
 
       if (e.key === 'Delete') {
         if (selected.type === 'FIGURE') {
-          // await appSignals.deleteFigure(selected.id);
+          await appSignals.deleteFigure(selected.id);
         } else if (selected.type === 'CONNECTION') {
           await appSignals.deleteConnection(selected.id);
-
-          setConnections((prev) => {
-            return [...prev].filter((item) => item.id !== selected.id);
-          });
         }
-
+        window.dispatchEvent(new Event(FETCH_SIGNALS.FETCH_FIGURES));
+        setActionMenu(null);
         setSelected(null);
       }
     };
@@ -175,7 +172,6 @@ function ZoomableStageWithControls() {
 
     if (!pointer) return;
 
-    // Adjust pointer to content coordinates for accurate placement
     const contentX = (pointer.x - stage.x()) / stage.scaleX();
     const contentY = (pointer.y - stage.y()) / stage.scaleY();
 
@@ -185,7 +181,23 @@ function ZoomableStageWithControls() {
         y: contentY,
       };
 
-      addModal({ type: MODALS_STATES.ADD_PERSON, props: { points } });
+      addModal({
+        type: MODALS_STATES.ADD_PERSON,
+        props: { points, isBlock: false },
+      });
+      setAppState(APP_STATES.IDLE);
+
+      return;
+    } else if (appState === APP_STATES.PICKING_BLOCK) {
+      const points = {
+        x: contentX,
+        y: contentY,
+      };
+
+      addModal({
+        type: MODALS_STATES.ADD_BLOCK,
+        props: { points, isBlock: true },
+      });
       setAppState(APP_STATES.IDLE);
 
       return;
@@ -193,22 +205,22 @@ function ZoomableStageWithControls() {
   };
 
   useEffect(() => {
-    const getPersons = async () => {
+    const getFigures = async () => {
       try {
-        const persons = await appSignals.getPersons();
+        const persons = await appSignals.getFigures();
 
-        setPersons(persons);
+        setFigures(persons);
       } catch (error) {
         console.log('error', error);
       }
     };
 
-    getPersons();
+    getFigures();
 
-    window.addEventListener(FETCH_SIGNALS.FETCH_PERSONS, getPersons);
+    window.addEventListener(FETCH_SIGNALS.FETCH_FIGURES, getFigures);
 
     return () => {
-      window.removeEventListener(FETCH_SIGNALS.FETCH_PERSONS, getPersons);
+      window.removeEventListener(FETCH_SIGNALS.FETCH_FIGURES, getFigures);
     };
   }, []);
 
@@ -238,9 +250,9 @@ function ZoomableStageWithControls() {
   };
 
   useEffect(() => {
-    if (persons) {
-      for (let i = 0; i < persons.length; ++i) {
-        const person = persons[i];
+    if (figures) {
+      for (let i = 0; i < figures.length; ++i) {
+        const figure = figures[i];
 
         const sides = ['top', 'bottom', 'left', 'right'];
 
@@ -255,10 +267,10 @@ function ZoomableStageWithControls() {
 
         for (let j = 0; j < sides.length; ++j) {
           updateAnchorPosition(
-            person.id,
+            figure.id,
             sides[j],
-            person.points.x + anchors[sides[j]].x,
-            person.points.y + anchors[sides[j]].y,
+            figure.points.x + anchors[sides[j]].x,
+            figure.points.y + anchors[sides[j]].y,
           );
         }
       }
@@ -275,13 +287,13 @@ function ZoomableStageWithControls() {
 
       fetchConnections();
     }
-  }, [persons]);
+  }, [figures]);
 
   const handlePositionChange = (
     id: string,
     newPoints: { x: number; y: number },
   ) => {
-    setPersons(
+    setFigures(
       (prev) =>
         prev?.map((p) => (p.id === id ? { ...p, points: newPoints } : p)) ||
         null,
@@ -422,7 +434,7 @@ function ZoomableStageWithControls() {
         height={window.innerHeight}
         onWheel={handleWheel}
         id="stage-container"
-        className={`${appState === APP_STATES.PICKING_PERSON ? 'picking' : ''}`}
+        className={`${appState === APP_STATES.PICKING_PERSON || appState === APP_STATES.PICKING_BLOCK ? 'picking' : ''}`}
         onClick={handleStageClick}
         onDragEnd={handleDragEnd}
         draggable
@@ -432,7 +444,7 @@ function ZoomableStageWithControls() {
         }}
       >
         <Layer draggable>
-          {persons?.map((p) => {
+          {figures?.map((p) => {
             return (
               <TextInRect
                 key={p.name}
@@ -449,7 +461,11 @@ function ZoomableStageWithControls() {
           })}
           {connections.map((conn) => {
             return (
-              <Connection conn={conn} getAnchorPosition={getAnchorPosition} />
+              <Connection
+                key={conn.id}
+                conn={conn}
+                getAnchorPosition={getAnchorPosition}
+              />
             );
           })}
 

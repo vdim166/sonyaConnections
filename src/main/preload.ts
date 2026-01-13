@@ -37,12 +37,16 @@ const electronHandler = {
     addPerson(options: figureTypeDTO) {
       return ipcRenderer.invoke(APP_SIGNALS.ADD_PERSON, options);
     },
-    getPersons() {
-      return ipcRenderer.invoke(APP_SIGNALS.GET_PERSONS);
+    getFigures() {
+      return ipcRenderer.invoke(APP_SIGNALS.GET_FIGURES);
     },
 
     updatePersonPosition(id: string, x: number, y: number) {
       return ipcRenderer.invoke(APP_SIGNALS.UPDATE_PERSON_POSITION, id, x, y);
+    },
+
+    updateFigureName(id: string, name: string) {
+      return ipcRenderer.invoke(APP_SIGNALS.UPDATE_FIGURE_NAME, id, name);
     },
 
     getCanvasPosition() {
@@ -63,6 +67,10 @@ const electronHandler = {
 
     deleteConnection(id: string) {
       return ipcRenderer.invoke(APP_SIGNALS.DELETE_CONNECTION, id);
+    },
+
+    deleteFigure(id: string) {
+      return ipcRenderer.invoke(APP_SIGNALS.DELETE_FIGURE, id);
     },
   },
 };

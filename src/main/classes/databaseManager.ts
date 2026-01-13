@@ -13,6 +13,7 @@ export type figureTypeDTO = {
     x: number;
     y: number;
   };
+  isBlock: boolean;
 };
 
 export type figureType = {
@@ -67,6 +68,41 @@ class DatabaseManager {
     }
   }
 
+  deleteFigure(id: string) {
+    try {
+      const data = this.readData();
+
+      data.figures = data.figures.filter((item) => item.id !== id);
+
+      const connectionsIdsToDelete: string[] = [];
+
+      for (let i = 0; i < data.connections.length; ++i) {
+        const con = data.connections[i];
+
+        const [startId] = con.startAnchorId.split('-');
+
+        if (startId === id) {
+          connectionsIdsToDelete.push(con.id);
+          continue;
+        }
+
+        const [endId] = con.endAnchorId.split('-');
+        if (endId === id) {
+          connectionsIdsToDelete.push(con.id);
+          continue;
+        }
+      }
+
+      data.connections = data.connections.filter(
+        (item) => !connectionsIdsToDelete.includes(item.id),
+      );
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
   updatePersonPosition(id: string, x: number, y: number) {
     try {
       const data = this.readData();
@@ -79,6 +115,24 @@ class DatabaseManager {
       data.figures[index].points.y = y;
 
       fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  updateFigureName(id: string, name: string) {
+    try {
+      const data = this.readData();
+
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      data.figures[index].name = name;
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+
+      return data.figures[index];
     } catch (error) {
       console.log('error', error);
     }

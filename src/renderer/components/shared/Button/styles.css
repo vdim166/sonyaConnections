@@ -15,3 +15,10 @@
 .custom-button:active {
   background-color: rgb(96, 96, 184);
 }
+.custom-button:disabled {
+  opacity: 0.5;
+}
+
+.custom-button:disabled:hover {
+  background-color: black;
+}

@@ -27,7 +27,7 @@ export const Connection = ({ getAnchorPosition, conn }: ConnectionProps) => {
       key={conn.id}
       points={[startPos.x, startPos.y, endPos.x, endPos.y]}
       stroke="#00796b"
-      strokeWidth={selected ? 5 : 2}
+      strokeWidth={selected?.id === conn.id ? 5 : 2}
       dash={[5, 5]}
       onClick={handleOnClick}
       hitStrokeWidth={12}

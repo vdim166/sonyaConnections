@@ -1,3 +1,4 @@
+import { figureType, figureTypeDTO } from '../../main/classes/databaseManager';
 import { pointsType } from '../../main/types/pointsType';
 import { connectionType } from '../components/ZoomableStageWithControls';
 
@@ -9,23 +10,22 @@ class AppSignals {
     return await window.electron.ipcRenderer.getZoom();
   };
 
-  getPersons = async () => {
-    const persons = await window.electron.ipcRenderer.getPersons();
-    return persons;
+  getFigures = async () => {
+    const figures: figureType[] =
+      await window.electron.ipcRenderer.getFigures();
+    return figures;
   };
 
-  addPerson = async (
-    name: string,
-    points: {
-      x: number;
-      y: number;
-    },
-  ) => {
-    return await window.electron.ipcRenderer.addPerson({ name, points });
+  addPerson = async (options: figureTypeDTO) => {
+    return await window.electron.ipcRenderer.addPerson(options);
   };
 
   updatePersonPosition = async (id: string, x: number, y: number) => {
     return await window.electron.ipcRenderer.updatePersonPosition(id, x, y);
+  };
+
+  updateFigureName = async (id: string, name: string) => {
+    return await window.electron.ipcRenderer.updateFigureName(id, name);
   };
 
   getCanvasPosition = async () => {
@@ -37,7 +37,9 @@ class AppSignals {
   };
 
   getConnections = async () => {
-    return await window.electron.ipcRenderer.getConnections();
+    const connections: connectionType[] | undefined =
+      await window.electron.ipcRenderer.getConnections();
+    return connections;
   };
 
   addConnection = async (con: connectionType) => {
@@ -46,6 +48,10 @@ class AppSignals {
 
   deleteConnection = async (id: string) => {
     return await window.electron.ipcRenderer.deleteConnection(id);
+  };
+
+  deleteFigure = async (id: string) => {
+    return await window.electron.ipcRenderer.deleteFigure(id);
   };
 }
 

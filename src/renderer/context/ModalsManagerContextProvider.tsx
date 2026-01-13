@@ -21,8 +21,6 @@ export const ModalsManagerContextProvider = ({
   const [modalProps, setModalProps] = useState<AddPersonModalType | null>(null);
 
   const addModal = ({ props, type }: addModalType) => {
-    console.log('type', type);
-
     setModalState(type);
     setModalProps(props);
   };
