@@ -26,6 +26,22 @@ const electronHandler = {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
 
+    startDrag: (mouseX: number, mouseY: number) => {
+      ipcRenderer.send('drag-start', { x: mouseX, y: mouseY });
+    },
+
+    dragWindow: (mouseX: number, mouseY: number) => {
+      ipcRenderer.send('window-drag', { x: mouseX, y: mouseY });
+    },
+
+    endDrag: (mouseX: number, mouseY: number) => {
+      ipcRenderer.send('drag-end', { x: mouseX, y: mouseY });
+    },
+
+    openApp: () => {
+      return ipcRenderer.invoke(APP_SIGNALS.OPEN_APP);
+    },
+
     setZoom(newScale: number) {
       return ipcRenderer.invoke(APP_SIGNALS.SET_ZOOM, newScale);
     },

@@ -1,0 +1,297 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Widget</title>
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: rgba(0, 0, 0, 0);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden;
+        user-select: none;
+        cursor: default;
+        height: 190px;
+      }
+
+      .widget-container {
+        background: rgba(40, 40, 40, 0.9);
+        border-radius: 12px;
+        color: white;
+        padding: 15px;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        height: calc(100% - 32px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transition: all 0.2s ease;
+      }
+
+      .widget-container.dragging {
+        background: rgba(50, 50, 50, 0.95);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: grab;
+      }
+
+      .header:active {
+        cursor: grabbing;
+      }
+
+      .header-title {
+        font-size: 14px;
+        font-weight: 600;
+        opacity: 0.9;
+      }
+
+      .controls {
+        display: flex;
+        gap: 6px;
+      }
+
+      .control-btn {
+        background: rgba(255, 255, 255, 0.08);
+        border: none;
+        border-radius: 4px;
+        width: 22px;
+        height: 22px;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.15s ease;
+        opacity: 0.7;
+      }
+
+      .control-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        opacity: 1;
+        transform: scale(1.1);
+      }
+
+      .control-btn.close:hover {
+        background: rgba(255, 80, 80, 0.3);
+      }
+
+      .content {
+        padding: 5px 0;
+      }
+
+      /* Анимация для перетаскивания */
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.02);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .dragging .widget-container {
+        animation: pulse 0.5s ease-in-out;
+      }
+
+      .btn-container {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .start-btn {
+        width: 120px;
+        height: 100px;
+
+        background-color: rgb(192, 82, 202);
+
+        border: 1px solid white;
+
+        border-radius: 10px;
+      }
+
+      .start-btn:hover {
+        cursor: pointer;
+        background-color: rgb(123, 51, 138);
+      }
+
+      .start-btn:active {
+        background-color: rgb(116, 58, 124);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="widget-container">
+      <div class="header" id="widget-header">
+        <div class="header-title"></div>
+        <div class="controls"></div>
+      </div>
+
+      <div class="content">
+        <div class="btn-container">
+          <button class="start-btn" onclick="handleOpen()"></button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  class WidgetDragger {
+    constructor() {
+      this.isDragging = false;
+      this.init();
+    }
+
+    init() {
+      this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+      const header = document.getElementById('widget-header');
+      const body = document.body;
+
+      if (!header) return;
+
+      // Начало перетаскивания
+      header.addEventListener('mousedown', (e) => {
+        this.startDrag(e);
+      });
+
+      // Перетаскивание
+      document.addEventListener('mousemove', (e) => {
+        this.drag(e);
+      });
+
+      // Конец перетаскивания
+      document.addEventListener('mouseup', (e) => {
+        this.endDrag(e);
+      });
+
+      // Для touch устройств
+      header.addEventListener('touchstart', (e) => {
+        this.startDrag(e.touches[0]);
+      });
+
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+          this.drag(e.touches[0]);
+          e.preventDefault();
+        }
+      });
+
+      document.addEventListener('touchend', (e) => {
+        this.endDrag(e);
+      });
+
+      // Предотвращаем выделение текста при перетаскивании
+      header.addEventListener('selectstart', (e) => {
+        if (this.isDragging) {
+          e.preventDefault();
+        }
+      });
+
+      // Двойной клик для сворачивания
+      header.addEventListener('dblclick', () => {
+        this.toggleMinimize();
+      });
+    }
+
+    startDrag(event) {
+      this.isDragging = true;
+
+      // Сохраняем начальную позицию мыши
+      this.startX = event.clientX;
+      this.startY = event.clientY;
+
+      // Отправляем начальные координаты в главный процесс
+      if (window.electron.ipcRenderer) {
+        window.electron.ipcRenderer.startDrag(event.screenX, event.screenY);
+      }
+
+      // Визуальная обратная связь
+      document.body.classList.add('dragging');
+      event.preventDefault();
+    }
+
+    drag(event) {
+      if (!this.isDragging) return;
+
+      // Отправляем текущие координаты мыши в главный процесс
+      if (window.electron.ipcRenderer) {
+        window.electron.ipcRenderer.dragWindow(event.screenX, event.screenY);
+      }
+
+      event.preventDefault();
+    }
+
+    endDrag(event) {
+      if (this.isDragging) {
+        this.isDragging = false;
+
+        // Уведомляем главный процесс об окончании перетаскивания
+        if (window.electron.ipcRenderer) {
+          window.electron.ipcRenderer.endDrag(event.screenX, event.screenY);
+        }
+
+        document.body.classList.remove('dragging');
+      }
+    }
+
+    toggleMinimize() {
+      if (window.electron.ipcRenderer) {
+        window.electron.ipcRenderer.minimizeWidget();
+      }
+    }
+  }
+
+  // Функции управления окном
+  function closeWidget() {
+    if (window.electron.ipcRenderer) {
+      window.electron.ipcRenderer.closeWidget();
+    }
+  }
+
+  function minimizeWidget() {
+    if (window.electron.ipcRenderer) {
+      window.electron.ipcRenderer.minimizeWidget();
+    }
+  }
+
+  // Инициализация
+  document.addEventListener('DOMContentLoaded', function () {
+    new WidgetDragger();
+
+    // Назначаем обработчики кнопок
+    const closeBtn = document.querySelector('.control-btn.close');
+    const minBtn = document.querySelector('.control-btn.minimize');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeWidget);
+    }
+
+    if (minBtn) {
+      minBtn.addEventListener('click', minimizeWidget);
+    }
+  });
+</script>
+
+<script>
+  const handleOpen = () => {
+    window.electron.ipcRenderer.openApp();
+  };
+</script>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Line } from 'react-konva';
+import { Stage, Layer, Line, Group, Rect, Transformer } from 'react-konva';
 import { TextInRect } from '../Figures/TextInRect';
 import { useAppContext } from '../../hooks/useAppContext';
 import './styles.css';
@@ -16,33 +16,14 @@ import { ZoomMenu } from '../ZoomMenu';
 import { Connection } from '../Figures/Connection';
 import { generateRandomId } from '../../../main/utils/generateRandomId';
 
+// @ts-ignore
+import Konva from 'konva';
+
 export type connectionType = {
   startAnchorId: string;
   endAnchorId: string;
   id: string;
 };
-
-// const throttle = (func: Function, limit: number) => {
-//   let lastFunc: NodeJS.Timeout | null = null;
-//   let lastRan: number | null = null;
-//   return (...args: any[]) => {
-//     if (lastRan === null) {
-//       func(...args);
-//       lastRan = Date.now();
-//     } else {
-//       if (lastFunc) clearTimeout(lastFunc);
-//       lastFunc = setTimeout(
-//         () => {
-//           if (Date.now() - lastRan! >= limit) {
-//             func(...args);
-//             lastRan = Date.now();
-//           }
-//         },
-//         limit - (Date.now() - lastRan!),
-//       );
-//     }
-//   };
-// };
 
 function ZoomableStageWithControls() {
   const { addModal } = useModalsManagerContext();
@@ -419,25 +400,182 @@ function ZoomableStageWithControls() {
   const getAnchorPosition = (anchorId: string) =>
     anchorPositions.current.get(anchorId) || null;
 
-  const handleDragEnd = async (
-    e: KonvaEventObject<DragEvent, Node<NodeConfig>>,
+  const prevStagePosRef = useRef({ x: 0, y: 0 });
+
+  const transformerRef = useRef<any>(null);
+
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStartPos, setPanStartPos] = useState({ x: 0, y: 0 });
+  const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 });
+
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionRect, setSelectionRect] = useState<{
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+  } | null>(null);
+  const [selectedShapes, setSelectedShapes] = useState<string[]>([]);
+
+  const handleMiddleMouseDown = (
+    e: KonvaEventObject<MouseEvent, Node<NodeConfig>>,
   ) => {
-    if (e.target !== e.currentTarget) return;
+    if (!stageRef) return;
+    const evt = e.evt;
 
-    try {
-      const stage = e.target.getStage(); // Get the stage from the dragged node
+    if (evt.button === 1) {
+      // Средняя кнопка мыши
+      evt.preventDefault();
 
-      if (stage) {
-        const newPos = e.target.position();
+      setIsPanning(true);
+      const stage = stageRef.current;
+      if (!stage) return;
+      const pos = stage.getPointerPosition();
 
-        await appSignals.saveCanvasPosition(newPos);
-      }
-    } catch (error) {
-      console.log('error', error);
+      if (pos) setPanStartPos(pos);
+      setStagePosition(stage.position());
     }
   };
 
-  const prevStagePosRef = useRef({ x: 0, y: 0 });
+  const handleMiddleMouseMove = (
+    e: KonvaEventObject<MouseEvent, Node<NodeConfig>>,
+  ) => {
+    if (!stageRef) return;
+
+    if (!isPanning || !stageRef.current) return;
+
+    const stage = stageRef.current;
+    const currentPos = stage.getPointerPosition();
+
+    if (!currentPos) return;
+
+    const deltaX = currentPos.x - panStartPos.x;
+    const deltaY = currentPos.y - panStartPos.y;
+
+    const newPosition = {
+      x: stagePosition.x + deltaX,
+      y: stagePosition.y + deltaY,
+    };
+
+    stage.position(newPosition);
+    stage.batchDraw();
+  };
+
+  const handleMiddleMouseUp = async (
+    e: KonvaEventObject<MouseEvent, Node<NodeConfig>>,
+  ) => {
+    const evt = e.evt;
+
+    if (evt.button === 1) {
+      setIsPanning(false);
+
+      if (stageRef && stageRef.current) {
+        const newPos = stageRef.current.position();
+        await appSignals.saveCanvasPosition(newPos);
+        setStagePosition(newPos);
+      }
+    }
+  };
+
+  // ============ ОБРАБОТЧИКИ ЛЕВОЙ КНОПКИ (ВЫДЕЛЕНИЕ) ============
+  const handleLeftMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (e.evt.button !== 0) return;
+
+    // Кликнули по пустому месту без модификаторов → начинаем выделение
+    if (e.target === e.target.getStage() && !e.evt.ctrlKey && !e.evt.shiftKey) {
+      const stage = e.target.getStage()!;
+      const pointer = stage.getPointerPosition()!;
+
+      // Мировые координаты начала выделения
+      const startWorld = {
+        x: (pointer.x - stage.x()) / stage.scaleX(),
+        y: (pointer.y - stage.y()) / stage.scaleY(),
+      };
+
+      setSelectionRect({
+        startX: startWorld.x,
+        startY: startWorld.y,
+        endX: startWorld.x,
+        endY: startWorld.y,
+      });
+
+      setIsSelecting(true);
+      setSelectedShapes([]); // сбрасываем текущее выделение
+    }
+  };
+
+  const handleLeftMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!stageRef) return;
+    if (!isSelecting) return;
+
+    const stage = stageRef.current!;
+    const pointer = stage.getPointerPosition()!;
+
+    const currentWorld = {
+      x: (pointer.x - stage.x()) / stage.scaleX(),
+      y: (pointer.y - stage.y()) / stage.scaleY(),
+    };
+
+    setSelectionRect((prev) => {
+      if (!prev) return null;
+
+      return {
+        ...prev,
+        endX: currentWorld.x,
+        endY: currentWorld.y,
+      };
+    });
+  };
+
+  const handleLeftMouseUp = () => {
+    if (!isSelecting) return;
+    setIsSelecting(false);
+
+    if (!selectionRect) return;
+
+    const { startX, startY, endX, endY } = selectionRect;
+
+    // Нормализуем прямоугольник (start может быть правее/ниже end)
+    const minX = Math.min(startX, endX);
+    const maxX = Math.max(startX, endX);
+    const minY = Math.min(startY, endY);
+    const maxY = Math.max(startY, endY);
+
+    const selectedIds: string[] = [];
+
+    figures?.forEach((fig) => {
+      const figX = fig.points.x;
+      const figY = fig.points.y;
+      const figW = 200; // ширина прямоугольника
+      const figH = 150;
+
+      // Простейшая проверка пересечения двух прямоугольников
+      if (
+        figX < maxX &&
+        figX + figW > minX &&
+        figY < maxY &&
+        figY + figH > minY
+      ) {
+        selectedIds.push(fig.id);
+      }
+    });
+
+    setSelectedShapes(selectedIds);
+
+    // Можно сразу применить transformer к выбранным группам
+    if (stageRef && selectedIds.length > 0 && transformerRef.current) {
+      const nodes = selectedIds
+        .map((id) => stageRef.current?.findOne(`#${id}`))
+        .filter(Boolean) as Konva.Group[];
+
+      transformerRef.current.nodes(nodes);
+    } else {
+      transformerRef.current?.nodes([]);
+    }
+
+    // Чистим прямоугольник выделения
+    setSelectionRect(null);
+  };
 
   return (
     <div>
@@ -451,8 +589,7 @@ function ZoomableStageWithControls() {
         id="stage-container"
         className={`${appState === APP_STATES.PICKING_PERSON || appState === APP_STATES.PICKING_BLOCK ? 'picking' : ''}`}
         onClick={handleStageClick}
-        onDragEnd={handleDragEnd}
-        draggable
+        // onDragEnd={handleDragEnd}
         onDblClick={() => {
           setSelected(null);
           setActionMenu(null);
@@ -482,8 +619,45 @@ function ZoomableStageWithControls() {
           // Очень важно! Обновляем предыдущую позицию
           prevStagePosRef.current = currentPos;
         }}
+        onMouseDown={(e) => {
+          const evt = e.evt;
+          if (evt.button === 1) handleMiddleMouseDown(e);
+          if (evt.button === 0) handleLeftMouseDown(e);
+        }}
+        onMouseMove={(e) => {
+          if (isPanning) handleMiddleMouseMove(e);
+          if (isSelecting) handleLeftMouseMove(e);
+        }}
+        onMouseUp={(e) => {
+          const evt = e.evt;
+          if (evt.button === 1) handleMiddleMouseUp(e);
+          if (evt.button === 0) handleLeftMouseUp();
+        }}
+        onMouseLeave={() => {
+          if (isPanning) {
+            setIsPanning(false);
+            if (stageRef && stageRef.current) {
+            }
+          }
+          if (isSelecting) {
+            setIsSelecting(false);
+            setSelectionRect(null);
+          }
+        }}
       >
-        <Layer draggable>
+        <Layer>
+          {selectionRect && (
+            <Rect
+              x={Math.min(selectionRect.startX, selectionRect.endX)}
+              y={Math.min(selectionRect.startY, selectionRect.endY)}
+              width={Math.abs(selectionRect.endX - selectionRect.startX)}
+              height={Math.abs(selectionRect.endY - selectionRect.startY)}
+              fill="rgba(0, 120, 255, 0.12)"
+              stroke="rgb(0, 140, 255)"
+              strokeWidth={1.5}
+              dash={[6, 4]}
+            />
+          )}
           {connections.map((conn) => {
             return (
               <Connection
@@ -508,8 +682,6 @@ function ZoomableStageWithControls() {
               />
             );
           })}
-
-          {/* Render temporary line during connection */}
           {tempLine && (
             <Line
               points={tempLine}
@@ -518,6 +690,21 @@ function ZoomableStageWithControls() {
               dash={[5, 5]}
             />
           )}
+          <Transformer
+            ref={transformerRef}
+            boundBoxFunc={(oldBox, newBox) => {
+              if (newBox.width < 5 || newBox.height < 5) {
+                return oldBox;
+              }
+              return newBox;
+            }}
+            anchorSize={10}
+            borderStroke="blue"
+            borderStrokeWidth={1}
+            anchorStroke="blue"
+            anchorFill="white"
+            rotateEnabled={true}
+          />
         </Layer>
       </Stage>
     </div>
