@@ -24,6 +24,8 @@ import { connectionType } from '../renderer/components/ZoomableStageWithControls
 export const userDataPath = app.getPath('userData');
 export const mainFolder = path.join(userDataPath, 'sonyaConnections');
 
+export const savedImagesPath = path.join(mainFolder, 'saved_images');
+
 class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -180,6 +182,24 @@ ipcMain.handle(APP_SIGNALS.OPEN_APP, async () => {
   } else {
     await createWindow();
   }
+});
+
+ipcMain.handle(
+  APP_SIGNALS.ADD_IMAGES_FOR_FIGURE,
+  async (_event, id, images) => {
+    return databaseManager.addImagesForFigure(id, images);
+  },
+);
+
+ipcMain.handle(
+  APP_SIGNALS.REMOVE_IMAGE_FOR_FIGURE,
+  async (_event, id, imageId) => {
+    return databaseManager.removeImageForFigure(id, imageId);
+  },
+);
+
+ipcMain.handle(APP_SIGNALS.GET_FIGURE_IMAGE, async (_event, id) => {
+  return databaseManager.getFigureImage(id);
 });
 
 app.on('window-all-closed', () => {

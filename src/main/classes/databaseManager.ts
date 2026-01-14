@@ -3,6 +3,7 @@ import path from 'path';
 import { app } from 'electron';
 import { generateRandomId } from '../utils/generateRandomId';
 import { connectionType } from '../../renderer/components/ZoomableStageWithControls';
+import { savedImagesPath } from '../main';
 
 const userDataPath = app.getPath('userData');
 const mainFolder = path.join(userDataPath, 'sonyaConnections');
@@ -18,6 +19,7 @@ export type figureTypeDTO = {
 
 export type figureType = {
   id: string;
+  images?: string[];
 } & figureTypeDTO;
 
 type dataType = {
@@ -166,6 +168,83 @@ class DatabaseManager {
       data.connections = data.connections.filter((item) => item.id !== id);
 
       fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  addImagesForFigure(id: string, images: Uint8Array<ArrayBuffer>[]) {
+    try {
+      const data = this.readData();
+
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      if (!data.figures[index].images) {
+        data.figures[index].images = [];
+      }
+
+      if (!fs.existsSync(savedImagesPath))
+        fs.mkdirSync(savedImagesPath, { recursive: true });
+
+      for (let i = 0; i < images.length; ++i) {
+        const image = images[i];
+
+        const imageId = generateRandomId();
+
+        const savePath = path.join(savedImagesPath, `${imageId}.jpg`);
+
+        fs.writeFileSync(savePath, image);
+
+        data.figures[index].images.push(imageId);
+      }
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+
+      return data.figures[index];
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  removeImageForFigure(id: string, imageId: string) {
+    try {
+      const data = this.readData();
+
+      if (!fs.existsSync(savedImagesPath))
+        fs.mkdirSync(savedImagesPath, { recursive: true });
+
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      if (data.figures[index].images) {
+        data.figures[index].images = data.figures[index].images.filter(
+          (item) => item !== imageId,
+        );
+      }
+
+      const imagePath = path.join(savedImagesPath, `${imageId}.jpg`);
+
+      fs.unlinkSync(imagePath);
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+
+      return data.figures[index];
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  getFigureImage(id: string) {
+    try {
+      if (!fs.existsSync(savedImagesPath))
+        fs.mkdirSync(savedImagesPath, { recursive: true });
+
+      const imagePath = path.join(savedImagesPath, `${id}.jpg`);
+      const data = fs.readFileSync(imagePath);
+      return data.toString('base64');
     } catch (error) {
       console.log('error', error);
     }

@@ -146,7 +146,16 @@ export const OpenDiaryModal = ({ id }: OpenDiaryModalProps) => {
           }),
         );
 
-        if (id) {
+        return figures;
+      } catch (error) {
+        console.log('error', error);
+      }
+    };
+
+    const setFigure = async () => {
+      try {
+        const figures = await fetchFigures();
+        if (id && figures) {
           const figure = figures.find((item) => item.id === id);
           if (figure) {
             setCurrentDiary(figure);
@@ -157,7 +166,7 @@ export const OpenDiaryModal = ({ id }: OpenDiaryModalProps) => {
       }
     };
 
-    fetchFigures();
+    setFigure();
 
     const fetchDiaryFigures = () => {
       fetchFigures();

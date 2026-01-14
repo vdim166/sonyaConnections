@@ -1,0 +1,12 @@
+.image-viewer-container {
+  background-color: rgb(238, 220, 220);
+  padding: 50px;
+  border-radius: 10px;
+}
+
+.image-viewer img {
+  width: 600px;
+  height: 400px;
+
+  object-fit: cover;
+}

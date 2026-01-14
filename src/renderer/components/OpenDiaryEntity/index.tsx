@@ -59,7 +59,13 @@ export const OpenDiaryEntity = ({
       </div>
 
       {showChildren.map((c) => {
-        return <OpenDiaryChildren c={c} blockConnections={blockConnections} />;
+        return (
+          <OpenDiaryChildren
+            key={c.id}
+            c={c}
+            blockConnections={blockConnections}
+          />
+        );
       })}
     </div>
   );

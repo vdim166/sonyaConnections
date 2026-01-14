@@ -88,6 +88,22 @@ const electronHandler = {
     deleteFigure(id: string) {
       return ipcRenderer.invoke(APP_SIGNALS.DELETE_FIGURE, id);
     },
+
+    addImagesForFigure(id: string, images: Uint8Array<ArrayBuffer>[]) {
+      return ipcRenderer.invoke(APP_SIGNALS.ADD_IMAGES_FOR_FIGURE, id, images);
+    },
+
+    removeImageForFigure(id: string, imageId: string) {
+      return ipcRenderer.invoke(
+        APP_SIGNALS.REMOVE_IMAGE_FOR_FIGURE,
+        id,
+        imageId,
+      );
+    },
+
+    getFigureImage(id: string) {
+      return ipcRenderer.invoke(APP_SIGNALS.GET_FIGURE_IMAGE, id);
+    },
   },
 };
 

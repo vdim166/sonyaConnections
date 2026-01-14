@@ -5,7 +5,6 @@ import {
   ModalsManagerContext,
   ModalsManagerContextType,
 } from './ModalsManagerContext';
-import { AddPersonModalType } from '../components/modals/AddPersonModal';
 
 type ModalsManagerContextProviderType = {
   children: React.ReactNode;
@@ -14,27 +13,33 @@ type ModalsManagerContextProviderType = {
 export const ModalsManagerContextProvider = ({
   children,
 }: ModalsManagerContextProviderType) => {
-  const [modalState, setModalState] = useState<
-    keyof typeof MODALS_STATES | null
-  >(null);
-
-  const [modalProps, setModalProps] = useState<AddPersonModalType | null>(null);
+  const [modalState, setModalState] = useState<addModalType[]>([]);
 
   const addModal = ({ props, type }: addModalType) => {
-    setModalState(type);
-    setModalProps(props);
+    setModalState((prev) => [
+      ...prev,
+      {
+        type,
+        props,
+      },
+    ]);
   };
 
   const closeModals = () => {
-    setModalState(null);
-    setModalProps(null);
+    setModalState([]);
+  };
+
+  const deleteModalById = (id: keyof typeof MODALS_STATES) => {
+    setModalState((prev) => {
+      return prev.filter((m) => m.type !== id);
+    });
   };
 
   const value: ModalsManagerContextType = {
     modalState,
-    modalProps,
     addModal,
     closeModals,
+    deleteModalById,
   };
 
   return (

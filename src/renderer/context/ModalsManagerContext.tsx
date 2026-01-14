@@ -1,14 +1,21 @@
 import { createContext } from 'react';
 import { AddPersonModalType } from '../components/modals/AddPersonModal';
 import { OpenDiaryModalProps } from '../components/modals/OpenDiaryModal';
+import { ImageViewerProps } from '../components/modals/ImageViewer';
 
 export const MODALS_STATES = {
   ADD_PERSON: 'ADD_PERSON',
   OPEN_DIARY: 'OPEN_DIARY',
   ADD_BLOCK: 'ADD_BLOCK',
+
+  IMAGE_VIEWER: 'IMAGE_VIEWER',
 } as const;
 
-type addModalPropsType = AddPersonModalType | OpenDiaryModalProps | null;
+type addModalPropsType =
+  | AddPersonModalType
+  | OpenDiaryModalProps
+  | ImageViewerProps
+  | null;
 
 export type addModalType = {
   type: keyof typeof MODALS_STATES;
@@ -16,17 +23,17 @@ export type addModalType = {
 };
 
 export type ModalsManagerContextType = {
-  modalState: keyof typeof MODALS_STATES | null;
+  modalState: addModalType[];
   addModal: (props: addModalType) => void;
-  modalProps: addModalPropsType;
   closeModals: () => void;
+  deleteModalById: (id: keyof typeof MODALS_STATES) => void;
 };
 
 const init: ModalsManagerContextType = {
-  modalState: null,
+  modalState: [],
   addModal: () => {},
-  modalProps: null,
   closeModals: () => {},
+  deleteModalById: () => {},
 };
 
 export const ModalsManagerContext =

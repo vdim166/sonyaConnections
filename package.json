@@ -1,5 +1,5 @@
 {
-  "name": "electron-react-boilerplate",
+  "name": "sonya-connections",
   "description": "A foundation for scalable desktop apps",
   "keywords": [
     "electron",
@@ -237,8 +237,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "electron-react-boilerplate",
-      "repo": "electron-react-boilerplate"
+      "owner": "sonya-connections",
+      "repo": "sonya-connections"
     }
   },
   "collective": {

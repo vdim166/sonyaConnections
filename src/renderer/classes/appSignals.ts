@@ -53,6 +53,21 @@ class AppSignals {
   deleteFigure = async (id: string) => {
     return await window.electron.ipcRenderer.deleteFigure(id);
   };
+
+  addImagesForFigure = async (
+    id: string,
+    images: Uint8Array<ArrayBuffer>[],
+  ) => {
+    return await window.electron.ipcRenderer.addImagesForFigure(id, images);
+  };
+
+  removeImageForFigure = async (id: string, imageId: string) => {
+    return await window.electron.ipcRenderer.removeImageForFigure(id, imageId);
+  };
+
+  getFigureImage = async (id: string) => {
+    return await window.electron.ipcRenderer.getFigureImage(id);
+  };
 }
 
 export const appSignals = new AppSignals();
