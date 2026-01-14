@@ -7,20 +7,24 @@ import { figureType } from '../../../../main/classes/databaseManager';
 import { OpenDiaryEntity } from '../../OpenDiaryEntity';
 import { EditDiary } from '../../EditDiary';
 import { useDiaryContext } from '../../../hooks/useDiaryContext';
+import { FETCH_SIGNALS } from '../../../classes/consts/FETCH_SIGNALS';
 
 export type OpenDiaryModalProps = {
   id: string | null;
 };
 
+export type extendedFigureType = figureType & {
+  isOpenByDefault: boolean;
+};
 export const OpenDiaryModal = ({ id }: OpenDiaryModalProps) => {
   const { closeModals } = useModalsManagerContext();
 
   const { setCurrentDiary } = useDiaryContext();
 
-  const [blocks, setBlocks] = useState<figureType[] | null>(null);
+  const [blocks, setBlocks] = useState<extendedFigureType[] | null>(null);
 
   const [blockConnections, setBlockConnections] = useState<{
-    [key: string]: figureType[];
+    [key: string]: extendedFigureType[];
   }>({});
 
   useEffect(() => {
@@ -70,17 +74,82 @@ export const OpenDiaryModal = ({ id }: OpenDiaryModalProps) => {
           }
         }
 
-        setBlockConnections(blockConnections);
-        setBlocks(blocks);
+        const openArray: string[] = [];
+
+        if (id) {
+          const blockConnectionsKeys = Object.keys(blockConnections);
+
+          for (let i = 0; i < blockConnectionsKeys.length; ++i) {
+            const objs = blockConnections[blockConnectionsKeys[i]];
+
+            for (let j = 0; j < objs.length; ++j) {
+              const obj = objs[j];
+
+              if (obj.id === id) {
+                const key = blockConnectionsKeys[i];
+
+                const buffer = [key];
+
+                while (buffer.length > 0) {
+                  const key = buffer.shift();
+
+                  if (!key) break;
+
+                  openArray.push(key);
+
+                  for (let k = 0; k < blockConnectionsKeys.length; ++k) {
+                    const conns = blockConnections[blockConnectionsKeys[k]];
+
+                    for (let l = 0; l < conns.length; ++l) {
+                      if (conns[l].id === key) {
+                        buffer.push(blockConnectionsKeys[k]);
+                      }
+                    }
+                  }
+                }
+
+                // if needed only once
+                // break
+              }
+            }
+          }
+        }
+
+        const modBlockConnections: { [key: string]: extendedFigureType[] } = {};
+
+        const blockConnectionsKeys = Object.keys(blockConnections);
+
+        for (let i = 0; i < blockConnectionsKeys.length; ++i) {
+          const objs = blockConnections[blockConnectionsKeys[i]];
+
+          for (let j = 0; j < objs.length; ++j) {
+            if (modBlockConnections[blockConnectionsKeys[i]]) {
+              modBlockConnections[blockConnectionsKeys[i]].push({
+                ...objs[j],
+                isOpenByDefault: openArray.includes(objs[j].id),
+              });
+            } else {
+              modBlockConnections[blockConnectionsKeys[i]] = [
+                {
+                  ...objs[j],
+                  isOpenByDefault: openArray.includes(objs[j].id),
+                },
+              ];
+            }
+          }
+        }
+
+        setBlockConnections(modBlockConnections);
+        setBlocks(
+          blocks.map((b) => {
+            return { ...b, isOpenByDefault: openArray.includes(b.id) };
+          }),
+        );
 
         if (id) {
           const figure = figures.find((item) => item.id === id);
           if (figure) {
             setCurrentDiary(figure);
-
-            if (!figure.isBlock) {
-              console.log('blockConnections', blockConnections);
-            }
           }
         }
       } catch (error) {
@@ -94,10 +163,16 @@ export const OpenDiaryModal = ({ id }: OpenDiaryModalProps) => {
       fetchFigures();
     };
 
-    window.addEventListener('FETCH_DIARY_FIGURES', fetchDiaryFigures);
+    window.addEventListener(
+      FETCH_SIGNALS.FETCH_DIARY_FIGURES,
+      fetchDiaryFigures,
+    );
 
     return () => {
-      window.removeEventListener('FETCH_DIARY_FIGURES', fetchDiaryFigures);
+      window.removeEventListener(
+        FETCH_SIGNALS.FETCH_DIARY_FIGURES,
+        fetchDiaryFigures,
+      );
     };
   }, [id]);
 

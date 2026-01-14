@@ -24,9 +24,11 @@ export const TextInRect = ({
   const [textX, setTextX] = useState(0);
   const [textY, setTextY] = useState(0);
 
-  const { selected, setSelected, setActionMenu } = useAppContext();
+  const { selected, setSelected, setActionMenu, actionMenu } = useAppContext();
 
   const groupRef = useRef<Konva.Group>(null);
+
+  const prevStagePosRef = useRef({ x: 0, y: 0 });
 
   const rectWidth = 200;
   const rectHeight = 150;
@@ -117,10 +119,32 @@ export const TextInRect = ({
       x={options.points.x}
       y={options.points.y}
       draggable={true}
+      id={options.id}
       ref={groupRef}
       clasName="text-in-rect-group"
       onDragMove={(e) => {
         onDragMoveUpdate({ x: e.target.x(), y: e.target.y() });
+
+        if (selected?.id !== options.id) return;
+        if (!actionMenu) return;
+
+        // Берём абсолютные экранные координаты группы
+        const group = e.target as Konva.Group;
+        const rect = group.getClientRect(); // ← вот это важно!
+
+        const stage = group.getStage();
+        if (!stage) return;
+
+        const container = stage.container();
+        const containerRect = container.getBoundingClientRect();
+
+        const screenX = containerRect.left + rect.x + rect.width / 2;
+        const screenY = containerRect.top + rect.y;
+
+        setActionMenu({ x: screenX, y: screenY });
+      }}
+      onDragStart={(e) => {
+        prevStagePosRef.current = e.target.position();
       }}
       onDragEnd={(e) => {
         updatePersonPosition(options.id, e.target.x(), e.target.y());

@@ -3,11 +3,12 @@ import { figureType } from '../../../main/classes/databaseManager';
 import './styles.css';
 import { ArrowDown } from '../../icons/ArrowDown';
 import { useDiaryContext } from '../../hooks/useDiaryContext';
+import { extendedFigureType } from '../modals/OpenDiaryModal';
 
 type OpenDiaryChildren = {
-  c: figureType;
+  c: extendedFigureType;
   blockConnections: {
-    [key: string]: figureType[];
+    [key: string]: extendedFigureType[];
   };
 };
 
@@ -15,8 +16,8 @@ export const OpenDiaryChildren = ({
   c,
   blockConnections,
 }: OpenDiaryChildren) => {
-  const [isClicked, setIsClicked] = useState(false);
-  const [children, setChildren] = useState<figureType[]>([]);
+  const [isClicked, setIsClicked] = useState(c.isOpenByDefault);
+  const [children, setChildren] = useState<extendedFigureType[]>([]);
 
   const { currentDiary, setCurrentDiary } = useDiaryContext();
 

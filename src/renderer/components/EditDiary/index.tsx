@@ -5,6 +5,7 @@ import { TextArea } from '../shared/TextArea';
 import './styles.css';
 import { DiaryImages } from '../DiaryImages';
 import { appSignals } from '../../classes/appSignals';
+import { FETCH_SIGNALS } from '../../classes/consts/FETCH_SIGNALS';
 
 export const EditDiary = () => {
   const { currentDiary, setCurrentDiary } = useDiaryContext();
@@ -28,7 +29,9 @@ export const EditDiary = () => {
 
       setCurrentDiary(newDiary);
 
-      window.dispatchEvent(new Event('FETCH_DIARY_FIGURES'));
+      window.dispatchEvent(new Event(FETCH_SIGNALS.FETCH_DIARY_FIGURES));
+
+      window.dispatchEvent(new Event(FETCH_SIGNALS.FETCH_FIGURES));
     } catch (error) {
       console.log('error', error);
     }

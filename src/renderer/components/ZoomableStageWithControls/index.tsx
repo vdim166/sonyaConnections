@@ -56,6 +56,7 @@ function ZoomableStageWithControls() {
     setPosition,
     setSelected,
     setActionMenu,
+    actionMenu,
   } = useAppContext();
 
   const [figures, setFigures] = useState<figureType[] | null>(null);
@@ -118,48 +119,60 @@ function ZoomableStageWithControls() {
     await appSignals.setZoom(newScale);
   };
 
-  const handleWheel = async (
-    e: KonvaEventObject<WheelEvent, Node<NodeConfig>>,
-  ) => {
-    try {
-      if (!stageRef) return;
+  const handleWheel = async (e: KonvaEventObject<WheelEvent>) => {
+    e.evt.preventDefault();
 
-      e.evt.preventDefault();
-      const stage = stageRef.current;
-      if (!stage) return;
+    if (!stageRef) return;
 
-      const oldScale = stage.scaleX();
-      const pointer = stage.getPointerPosition();
+    const stage = stageRef.current;
+    if (!stage) return;
 
-      if (!pointer) return;
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
 
-      const mousePointTo = {
-        x: (pointer.x - stage.x()) / oldScale,
-        y: (pointer.y - stage.y()) / oldScale,
-      };
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
 
-      let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+    let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+    newScale = Math.max(minScale, Math.min(maxScale, newScale));
 
-      // Ограничения масштаба
-      newScale = Math.max(minScale, Math.min(maxScale, newScale));
+    stage.scale({ x: newScale, y: newScale });
 
-      stage.scale({ x: newScale, y: newScale });
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
 
-      const newPos = {
-        x: pointer.x - mousePointTo.x * newScale,
-        y: pointer.y - mousePointTo.y * newScale,
-      };
+    stage.position(newPos);
 
-      stage.position(newPos);
-      setScale(newScale);
-      setZoom(newScale);
-      setPosition(newPos);
-      stage.batchDraw();
+    // ← Вот это важно — пересчитываем экранные координаты меню
+    if (actionMenu && selected?.id) {
+      // Предполагаем, что actionMenu привязано к фигуре
+      // Нужно знать, к какой именно фигуре оно открыто
 
-      await appSignals.saveCanvasPosition(newPos);
-    } catch (error) {
-      console.log('error', error);
+      const figure = stage.findOne(`#${selected.id}`); // или другой способ найти группу
+
+      if (figure) {
+        const rect = figure.getClientRect();
+        const container = stage.container();
+        const containerRect = container.getBoundingClientRect();
+
+        const newScreenX = containerRect.left + rect.x + rect.width / 2;
+        const newScreenY = containerRect.top + rect.y;
+
+        setActionMenu({ x: newScreenX, y: newScreenY });
+      }
     }
+
+    setScale(newScale);
+    setZoom(newScale);
+    setPosition(newPos);
+    stage.batchDraw();
+
+    await appSignals.saveCanvasPosition(newPos);
   };
 
   const handleStageClick = (
@@ -279,7 +292,7 @@ function ZoomableStageWithControls() {
         try {
           const connections = await appSignals.getConnections();
 
-          setConnections(connections);
+          setConnections(connections || []);
         } catch (error) {
           console.log('error', error);
         }
@@ -424,6 +437,8 @@ function ZoomableStageWithControls() {
     }
   };
 
+  const prevStagePosRef = useRef({ x: 0, y: 0 });
+
   return (
     <div>
       <ZoomMenu scaleBy={scaleBy} maxScale={maxScale} minScale={minScale} />
@@ -442,8 +457,42 @@ function ZoomableStageWithControls() {
           setSelected(null);
           setActionMenu(null);
         }}
+        onDragStart={(e) => {
+          prevStagePosRef.current = e.target.position();
+        }}
+        onDragMove={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (!actionMenu) return;
+
+          const currentPos = e.target.position();
+          const prevPos = prevStagePosRef.current;
+
+          const deltaX = prevPos.x - currentPos.x;
+          const deltaY = prevPos.y - currentPos.y;
+
+          setActionMenu((prev) => {
+            if (!prev) return null;
+
+            return {
+              x: prev.x - deltaX,
+              y: prev.y - deltaY,
+            };
+          });
+
+          // Очень важно! Обновляем предыдущую позицию
+          prevStagePosRef.current = currentPos;
+        }}
       >
         <Layer draggable>
+          {connections.map((conn) => {
+            return (
+              <Connection
+                key={conn.id}
+                conn={conn}
+                getAnchorPosition={getAnchorPosition}
+              />
+            );
+          })}
           {figures?.map((p) => {
             return (
               <TextInRect
@@ -456,15 +505,6 @@ function ZoomableStageWithControls() {
                 onDragMoveUpdate={(tempPoints) =>
                   handleDragMoveUpdate(p.id, tempPoints)
                 }
-              />
-            );
-          })}
-          {connections.map((conn) => {
-            return (
-              <Connection
-                key={conn.id}
-                conn={conn}
-                getAnchorPosition={getAnchorPosition}
               />
             );
           })}

@@ -30,6 +30,7 @@ export const AddPersonModal = ({ points, isBlock: ib }: AddPersonModalType) => {
       await appSignals.addPerson({ name, points, isBlock });
 
       window.dispatchEvent(new Event(FETCH_SIGNALS.FETCH_FIGURES));
+
       closeModals();
     } catch (error) {
       console.log('error', error);

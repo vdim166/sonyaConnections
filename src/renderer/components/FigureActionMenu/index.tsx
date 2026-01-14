@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { appSignals } from '../../classes/appSignals';
 import { FETCH_SIGNALS } from '../../classes/consts/FETCH_SIGNALS';
 import { MODALS_STATES } from '../../context/ModalsManagerContext';
