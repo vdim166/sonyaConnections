@@ -15,11 +15,14 @@ export type figureTypeDTO = {
     y: number;
   };
   isBlock: boolean;
+  description?: string;
 };
 
 export type figureType = {
   id: string;
   images?: string[];
+
+  cover?: string | null;
 } & figureTypeDTO;
 
 type dataType = {
@@ -55,6 +58,20 @@ class DatabaseManager {
     }
   }
 
+  getFigure(id: string) {
+    try {
+      const data = this.readData();
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) {
+        return null;
+      }
+
+      return data.figures[index] || null;
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
   addPerson(options: figureTypeDTO) {
     try {
       const data = this.readData();
@@ -208,6 +225,62 @@ class DatabaseManager {
     }
   }
 
+  addCoverForFigure(id: string, image: Uint8Array<ArrayBuffer>) {
+    try {
+      const data = this.readData();
+
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      if (!fs.existsSync(savedImagesPath))
+        fs.mkdirSync(savedImagesPath, { recursive: true });
+
+      const imageId = generateRandomId();
+
+      const savePath = path.join(savedImagesPath, `${imageId}.jpg`);
+
+      fs.writeFileSync(savePath, image);
+
+      data.figures[index].cover = imageId;
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+
+      return data.figures[index];
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  deleteCoverForFigure(id: string) {
+    try {
+      const data = this.readData();
+
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      if (!fs.existsSync(savedImagesPath))
+        fs.mkdirSync(savedImagesPath, { recursive: true });
+
+      const figure = data.figures[index];
+
+      if (!figure.cover) return;
+
+      const savePath = path.join(savedImagesPath, `${figure.cover}.jpg`);
+
+      data.figures[index].cover = null;
+
+      fs.unlinkSync(savePath);
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+
+      return data.figures[index];
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
   removeImageForFigure(id: string, imageId: string) {
     try {
       const data = this.readData();
@@ -245,6 +318,23 @@ class DatabaseManager {
       const imagePath = path.join(savedImagesPath, `${id}.jpg`);
       const data = fs.readFileSync(imagePath);
       return data.toString('base64');
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  setFigureDescription(id: string, description: string) {
+    try {
+      const data = this.readData();
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      data.figures[index].description = description;
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
+
+      return data.figures[index];
     } catch (error) {
       console.log('error', error);
     }

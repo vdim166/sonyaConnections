@@ -57,6 +57,10 @@ const electronHandler = {
       return ipcRenderer.invoke(APP_SIGNALS.GET_FIGURES);
     },
 
+    getFigure(id: string) {
+      return ipcRenderer.invoke(APP_SIGNALS.GET_FIGURE, id);
+    },
+
     updatePersonPosition(id: string, x: number, y: number) {
       return ipcRenderer.invoke(APP_SIGNALS.UPDATE_PERSON_POSITION, id, x, y);
     },
@@ -103,6 +107,22 @@ const electronHandler = {
 
     getFigureImage(id: string) {
       return ipcRenderer.invoke(APP_SIGNALS.GET_FIGURE_IMAGE, id);
+    },
+
+    setFigureDescription(id: string, description: string) {
+      return ipcRenderer.invoke(
+        APP_SIGNALS.SET_FIGURE_DESCRIPTION,
+        id,
+        description,
+      );
+    },
+
+    addCoverForFigure(id: string, cover: Uint8Array<ArrayBuffer>) {
+      return ipcRenderer.invoke(APP_SIGNALS.ADD_COVER_FOR_FIGURE, id, cover);
+    },
+
+    deleteCoverForFigure(id: string) {
+      return ipcRenderer.invoke(APP_SIGNALS.DELETE_COVER_FOR_FIGURE, id);
     },
   },
 };

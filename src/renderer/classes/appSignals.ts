@@ -10,6 +10,13 @@ class AppSignals {
     return await window.electron.ipcRenderer.getZoom();
   };
 
+  getFigure: (id: string) => Promise<figureType | null> = async (
+    id: string,
+  ) => {
+    const figure: figureType = await window.electron.ipcRenderer.getFigure(id);
+    return figure;
+  };
+
   getFigures = async () => {
     const figures: figureType[] =
       await window.electron.ipcRenderer.getFigures();
@@ -67,6 +74,21 @@ class AppSignals {
 
   getFigureImage = async (id: string) => {
     return await window.electron.ipcRenderer.getFigureImage(id);
+  };
+
+  setFigureDescription = async (id: string, description: string) => {
+    return await window.electron.ipcRenderer.setFigureDescription(
+      id,
+      description,
+    );
+  };
+
+  addCoverForFigure = async (id: string, cover: Uint8Array<ArrayBuffer>) => {
+    return await window.electron.ipcRenderer.addCoverForFigure(id, cover);
+  };
+
+  deleteCoverForFigure = async (id: string) => {
+    return await window.electron.ipcRenderer.deleteCoverForFigure(id);
   };
 }
 

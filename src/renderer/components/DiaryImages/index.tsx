@@ -58,6 +58,8 @@ export const DiaryImages = () => {
           }
 
           setImages(images);
+        } else {
+          setImages([]);
         }
       } catch (error) {
         console.log('error', error);

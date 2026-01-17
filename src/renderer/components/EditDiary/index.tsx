@@ -11,11 +11,15 @@ export const EditDiary = () => {
   const { currentDiary, setCurrentDiary } = useDiaryContext();
   const [name, setName] = useState('');
 
+  const [desc, setDesc] = useState('');
+
   useEffect(() => {
     if (currentDiary) {
       setName(currentDiary.name);
+      setDesc(currentDiary.description || '');
     } else {
       setName('');
+      setDesc('');
     }
   }, [currentDiary]);
 
@@ -25,6 +29,15 @@ export const EditDiary = () => {
 
   const handleSubmit = async () => {
     try {
+      if (desc !== currentDiary.description) {
+        const newDiary = await appSignals.setFigureDescription(
+          currentDiary.id,
+          desc,
+        );
+
+        setCurrentDiary(newDiary);
+      }
+
       const newDiary = await appSignals.updateFigureName(currentDiary.id, name);
 
       setCurrentDiary(newDiary);
@@ -37,21 +50,31 @@ export const EditDiary = () => {
     }
   };
 
+  const shouldChange =
+    name !== currentDiary.name || desc !== currentDiary.description;
+
   return (
     <div className="open-diary-modal-diary">
       <p>Name</p>
-      <TextArea
-        className=""
+      <input
+        className="open-diary-modal-diary-name-input"
         value={name}
         onChange={(e) => {
           setName(e.target.value);
         }}
       />
 
+      <TextArea
+        value={desc}
+        onChange={(e) => {
+          setDesc(e.target.value);
+        }}
+      />
+
       <DiaryImages />
 
       <div className="open-diary-modal-diary-save-button">
-        <Button disabled={name === currentDiary.name} onClick={handleSubmit}>
+        <Button disabled={!shouldChange} onClick={handleSubmit}>
           Сохранить
         </Button>
       </div>

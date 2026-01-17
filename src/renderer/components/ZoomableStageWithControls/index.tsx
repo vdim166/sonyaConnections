@@ -457,6 +457,21 @@ function ZoomableStageWithControls() {
       y: stagePosition.y + deltaY,
     };
 
+    if (actionMenu && selected) {
+      const group = stage.findOne(`#${selected.id}`);
+      if (!group) return;
+      const rect = group.getClientRect(); // ← вот это важно!
+
+      if (!stage) return;
+
+      const container = stage.container();
+      const containerRect = container.getBoundingClientRect();
+
+      const screenX = containerRect.left + rect.x + rect.width / 2;
+      const screenY = containerRect.top + rect.y;
+
+      setActionMenu({ x: screenX, y: screenY });
+    }
     stage.position(newPosition);
     stage.batchDraw();
   };

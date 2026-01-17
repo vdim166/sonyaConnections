@@ -170,8 +170,16 @@ ipcMain.handle(APP_SIGNALS.DELETE_CONNECTION, (_event, id: string) => {
   return databaseManager.deleteConnection(id);
 });
 
+ipcMain.handle(APP_SIGNALS.SET_FIGURE_DESCRIPTION, (_event, id, desc) => {
+  return databaseManager.setFigureDescription(id, desc);
+});
+
 ipcMain.handle(APP_SIGNALS.DELETE_FIGURE, (_event, id: string) => {
   return databaseManager.deleteFigure(id);
+});
+
+ipcMain.handle(APP_SIGNALS.GET_FIGURE, (_event, id) => {
+  return databaseManager.getFigure(id);
 });
 
 ipcMain.handle(APP_SIGNALS.OPEN_APP, async () => {
@@ -182,6 +190,14 @@ ipcMain.handle(APP_SIGNALS.OPEN_APP, async () => {
   } else {
     await createWindow();
   }
+});
+
+ipcMain.handle(APP_SIGNALS.ADD_COVER_FOR_FIGURE, (_event, id, image) => {
+  return databaseManager.addCoverForFigure(id, image);
+});
+
+ipcMain.handle(APP_SIGNALS.DELETE_COVER_FOR_FIGURE, (_event, id) => {
+  return databaseManager.deleteCoverForFigure(id);
 });
 
 ipcMain.handle(

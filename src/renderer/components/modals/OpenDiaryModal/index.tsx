@@ -16,6 +16,7 @@ export type OpenDiaryModalProps = {
 export type extendedFigureType = figureType & {
   isOpenByDefault: boolean;
 };
+
 export const OpenDiaryModal = ({ id }: OpenDiaryModalProps) => {
   const { closeModals } = useModalsManagerContext();
 
