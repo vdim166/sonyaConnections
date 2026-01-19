@@ -6,6 +6,7 @@ import './styles.css';
 import { DiaryImages } from '../DiaryImages';
 import { appSignals } from '../../classes/appSignals';
 import { FETCH_SIGNALS } from '../../classes/consts/FETCH_SIGNALS';
+import { DiaryBirthday } from '../DiaryBirthday';
 
 export const EditDiary = () => {
   const { currentDiary, setCurrentDiary } = useDiaryContext();
@@ -56,6 +57,7 @@ export const EditDiary = () => {
   return (
     <div className="open-diary-modal-diary">
       <p>Name</p>
+
       <input
         className="open-diary-modal-diary-name-input"
         value={name}
@@ -64,14 +66,17 @@ export const EditDiary = () => {
         }}
       />
 
+      {!currentDiary.isBlock && <DiaryBirthday />}
+
       <TextArea
         value={desc}
+        className="open-diary-modal-diary-name-textarea"
         onChange={(e) => {
           setDesc(e.target.value);
         }}
       />
 
-      <DiaryImages />
+      {!currentDiary.isBlock && <DiaryImages />}
 
       <div className="open-diary-modal-diary-save-button">
         <Button disabled={!shouldChange} onClick={handleSubmit}>

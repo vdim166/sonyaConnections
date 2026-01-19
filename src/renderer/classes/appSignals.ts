@@ -90,6 +90,14 @@ class AppSignals {
   deleteCoverForFigure = async (id: string) => {
     return await window.electron.ipcRenderer.deleteCoverForFigure(id);
   };
+
+  getFigureDate = async (id: string) => {
+    return await window.electron.ipcRenderer.getFigureDate(id);
+  };
+
+  saveFigureDate = async (id: string, date: string) => {
+    return await window.electron.ipcRenderer.saveFigureDate(id, date);
+  };
 }
 
 export const appSignals = new AppSignals();

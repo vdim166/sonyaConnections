@@ -21,6 +21,7 @@ export type figureTypeDTO = {
 export type figureType = {
   id: string;
   images?: string[];
+  date?: string;
 
   cover?: string | null;
 } & figureTypeDTO;
@@ -335,6 +336,34 @@ class DatabaseManager {
       fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
 
       return data.figures[index];
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  getFigureDate(id: string) {
+    try {
+      const data = this.readData();
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      return data.figures[index].date;
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  saveFigureDate(id: string, date: string) {
+    try {
+      const data = this.readData();
+      const index = data.figures.findIndex((item) => item.id === id);
+
+      if (index === -1) return;
+
+      data.figures[index].date = date;
+
+      fs.writeFileSync(this.dataPath, JSON.stringify(data), 'utf-8');
     } catch (error) {
       console.log('error', error);
     }

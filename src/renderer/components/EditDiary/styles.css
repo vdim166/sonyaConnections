@@ -8,5 +8,9 @@
 
 .open-diary-modal-diary-name-input {
   width: 100%;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+}
+
+.open-diary-modal-diary-name-textarea {
+  margin-top: 5px;
 }

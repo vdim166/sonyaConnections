@@ -218,6 +218,14 @@ ipcMain.handle(APP_SIGNALS.GET_FIGURE_IMAGE, async (_event, id) => {
   return databaseManager.getFigureImage(id);
 });
 
+ipcMain.handle(APP_SIGNALS.GET_FIGURE_DATE, (_event, id) => {
+  return databaseManager.getFigureDate(id);
+});
+
+ipcMain.handle(APP_SIGNALS.SAVE_FIGURE_DATE, (_event, id, date) => {
+  return databaseManager.saveFigureDate(id, date);
+});
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed

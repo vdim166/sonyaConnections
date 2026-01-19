@@ -124,6 +124,13 @@ const electronHandler = {
     deleteCoverForFigure(id: string) {
       return ipcRenderer.invoke(APP_SIGNALS.DELETE_COVER_FOR_FIGURE, id);
     },
+
+    saveFigureDate(id: string, date: string) {
+      return ipcRenderer.invoke(APP_SIGNALS.SAVE_FIGURE_DATE, id, date);
+    },
+    getFigureDate(id: string) {
+      return ipcRenderer.invoke(APP_SIGNALS.GET_FIGURE_DATE, id);
+    },
   },
 };
 

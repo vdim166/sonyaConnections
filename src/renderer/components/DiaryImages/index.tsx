@@ -72,7 +72,7 @@ export const DiaryImages = () => {
   return (
     <div className="diary-images-container">
       {images.map((image) => {
-        return <DiaryImage image={image} />;
+        return <DiaryImage image={image} key={image.id} />;
       })}
       <div className="add-diary-image" onClick={handleAddImage}>
         <Plus />

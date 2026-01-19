@@ -1,0 +1,12 @@
+.diary-birthday-container {
+  display: flex;
+
+  gap: 10px;
+
+  align-items: center;
+}
+
+.diary-birthday-show-age {
+  color: gray;
+  font-size: 15px;
+}
