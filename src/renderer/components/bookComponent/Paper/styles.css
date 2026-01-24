@@ -1,0 +1,212 @@
+.paper {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 10px;
+  left: 0;
+
+  perspective: 1500px;
+}
+
+.front,
+.back {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: left;
+  /* width: 352px; */
+
+  transition: transform 0.5s;
+}
+
+.front {
+  z-index: 1;
+  backface-visibility: hidden;
+  /* border: 1px solid black; */
+
+  /* outline: 1px solid black; */
+  box-shadow:
+    -1px 0px 0px 0px black,
+    0px 0px 0px 0px black;
+}
+
+.back {
+  z-index: 0;
+  /* border: 1px solid black; */
+  /* border-left: 2px solid black; */
+  box-shadow:
+    -1px 0px 0px 0px black,
+    0px 0px 0px 0px black;
+}
+
+.flipped .front,
+.flipped .back {
+  transform: rotateY(-180deg);
+}
+
+.front-content,
+.back-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+}
+
+.back-content {
+  transform: rotateY(180deg);
+}
+.front-content-inner {
+  transform: translateX(22px);
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.front-content-inner .paper-content-textarea-container {
+  padding-right: 23px;
+}
+
+.back-content-inner .paper-content-textarea-container {
+  padding-left: 23px;
+}
+
+.back-content-inner {
+  transform: translateX(-22px);
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.front,
+.back {
+  display: flex;
+}
+
+.back-grab-end,
+.front-grab-end {
+  width: 15%;
+  height: 100%;
+  position: relative;
+  transform: translateX(-1px);
+}
+
+.front-grab-end:hover {
+  cursor: grab;
+}
+
+.back-grab-end:hover {
+  cursor: grab;
+}
+
+.edge {
+  height: 8%;
+  background-color: white;
+  backface-visibility: hidden;
+}
+.other-page-end {
+  background-color: white;
+  height: 92%;
+  backface-visibility: hidden;
+}
+
+.front-grab-end .edge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  border-style: solid;
+  border-width: 0 46px 40px 0;
+  border-color: white transparent;
+  transition: all ease 0.5s;
+}
+
+.front-grab-end .edge::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-style: solid;
+  border-width: 0 0 0 0;
+  border-color: #ddd transparent;
+  transition: all ease 0.2s;
+}
+
+.front-grab-end:hover .edge {
+  background-color: transparent;
+  transition: all 0.2s;
+}
+
+.front-grab-end:hover .edge::after {
+  border-width: 0 46px 40px 0;
+  border-color: #eee transparent;
+}
+
+.back-grab-end .edge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  border-style: solid;
+  border-width: 0 46px 40px 0;
+  border-color: white transparent;
+  transition: all ease 0.5s;
+}
+
+.back-grab-end .edge::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-style: solid;
+  border-width: 0 0 0 0;
+  border-color: #ddd transparent;
+  transition: all ease 0.2s;
+}
+
+.back-grab-end:hover .edge {
+  background-color: transparent;
+  transition: all 0.2s;
+}
+
+.back-grab-end:hover .edge::after {
+  border-width: 0 46px 40px 0;
+  border-color: #eee transparent;
+}
+
+.folding-effect .edge {
+  background-color: transparent;
+}
+
+.folding-effect .edge::after {
+  border-width: 0 46px 40px 0;
+  border-color: #eee transparent;
+}
+
+.folding-effect .edge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  border-style: solid;
+  border-width: 0 46px 40px 0;
+  border-color: white transparent;
+  transition: all ease 0.5s;
+}
+
+.folding-effect-back .edge {
+  background-color: transparent;
+}

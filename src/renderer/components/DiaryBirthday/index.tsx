@@ -52,6 +52,7 @@ export const DiaryBirthday = () => {
   useEffect(() => {
     const fetchDate = async () => {
       try {
+        setYears(null);
         if (!currentDiary) return;
 
         const date = await appSignals.getFigureDate(currentDiary.id);

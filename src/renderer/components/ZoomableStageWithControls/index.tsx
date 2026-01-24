@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Line, Group, Rect, Transformer } from 'react-konva';
+import {
+  Stage,
+  Layer,
+  Line,
+  Group,
+  Rect,
+  Transformer,
+  Circle,
+} from 'react-konva';
 import { TextInRect } from '../Figures/TextInRect';
 import { useAppContext } from '../../hooks/useAppContext';
 import './styles.css';
@@ -661,6 +669,17 @@ function ZoomableStageWithControls() {
         }}
       >
         <Layer>
+          <Circle
+            x={0}
+            y={0}
+            {...{
+              radius: 6,
+              fill: '#2179dd',
+              stroke: '#60a5fa',
+              strokeWidth: 1.5,
+              hitStrokeWidth: 10,
+            }}
+          />
           {selectionRect && (
             <Rect
               x={Math.min(selectionRect.startX, selectionRect.endX)}
